@@ -130,14 +130,12 @@ dns_matches() {
 write_env() {
   install_dir="$1"
   email="$2"
-  username="$3"
-  password="$4"
-  session_secret="$5"
+  setup_token="$3"
+  session_secret="$4"
 
   cat > "$install_dir/.env" <<EOF_ENV
 ACME_EMAIL=$email
-NERDGATE_USERNAME=$username
-NERDGATE_PASSWORD=$password
+NERDGATE_SETUP_TOKEN=$setup_token
 NERDGATE_SESSION_SECRET=$session_secret
 EOF_ENV
 }
@@ -213,16 +211,6 @@ main() {
   email="$(read_tty "Let's Encrypt email" "${ACME_EMAIL:-}")"
   validate_safe_env_value "email" "$email"
 
-  username="$(read_tty "Admin username" "${NERDGATE_USERNAME:-admin}")"
-  validate_safe_env_value "username" "$username"
-
-  password="$(read_secret_tty "Admin password (empty = generate)")"
-  if [ -z "$password" ]; then
-    password="$(random_hex 16)"
-    say "Generated admin password: $password"
-  fi
-  validate_safe_env_value "password" "$password"
-
   say ""
   say "Checking public IP..."
   public_ip="$(detect_public_ip | tr -d ' \n\r')"
@@ -244,7 +232,8 @@ main() {
   download_project "$install_dir"
 
   session_secret="$(random_hex 32)"
-  write_env "$install_dir" "$email" "$username" "$password" "$session_secret"
+  setup_token="$(random_hex 24)"
+  write_env "$install_dir" "$email" "$setup_token" "$session_secret"
   write_bootstrap_route "$install_dir" "$panel_domain"
 
   say "Starting containers..."
@@ -257,8 +246,11 @@ main() {
   say ""
   say "NerdGate Hub is starting."
   say "URL: https://$panel_domain"
-  say "Username: $username"
-  say "Password: $password"
+  say "Setup token: $setup_token"
+  say ""
+  say "Open the URL, paste the setup token, and create the first admin account."
+  say "If HTTPS is not ready after DNS has propagated, run:"
+  say "  cd $install_dir && ./scripts/diagnose.sh"
 }
 
 main "$@"

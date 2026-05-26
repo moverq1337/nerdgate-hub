@@ -39,6 +39,8 @@ type Store struct {
 	db *sql.DB
 }
 
+const setupTokenHashKey = "setup_token_hash"
+
 func Open(dataDir string) (*Store, error) {
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		return nil, err
@@ -153,14 +155,76 @@ func (s *Store) DeleteRoute(ctx context.Context, id string) error {
 }
 
 func (s *Store) EnsureAdminUser(ctx context.Context, username, password string) error {
-	var count int
-	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&count); err != nil {
+	hasUsers, err := s.HasUsers(ctx)
+	if err != nil {
 		return err
 	}
-	if count > 0 {
+	if hasUsers {
 		return nil
 	}
 	return s.ResetPassword(ctx, username, password)
+}
+
+func (s *Store) HasUsers(ctx context.Context) (bool, error) {
+	var count int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (s *Store) EnsureSetupToken(ctx context.Context, token string) error {
+	hasUsers, err := s.HasUsers(ctx)
+	if err != nil {
+		return err
+	}
+	if hasUsers {
+		return nil
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return errors.New("setup token is required when no admin user exists")
+	}
+
+	hash, err := security.HashPassword(token)
+	if err != nil {
+		return err
+	}
+	return s.SetSetting(ctx, setupTokenHashKey, hash)
+}
+
+func (s *Store) CompleteSetup(ctx context.Context, token, username, password string) error {
+	hasUsers, err := s.HasUsers(ctx)
+	if err != nil {
+		return err
+	}
+	if hasUsers {
+		return errors.New("setup is already complete")
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return errors.New("setup token is required")
+	}
+
+	hash, err := s.Setting(ctx, setupTokenHashKey)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("setup token is not configured")
+		}
+		return err
+	}
+	if !security.CheckPassword(token, hash) {
+		return errors.New("setup token is invalid")
+	}
+
+	if err := s.ResetPassword(ctx, username, password); err != nil {
+		return err
+	}
+
+	_, err = s.db.ExecContext(ctx, `DELETE FROM settings WHERE key = ?`, setupTokenHashKey)
+	return err
 }
 
 func (s *Store) ResetPassword(ctx context.Context, username, password string) error {

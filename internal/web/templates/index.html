@@ -27,8 +27,8 @@
         </div>
       </header>
 
-      {{ if .Status }}
-      <div class="notice success">Route {{ .Status }}.</div>
+      {{ if .StatusMessage }}
+      <div class="notice success">{{ .StatusMessage }}</div>
       {{ end }}
 
       {{ if .Error }}

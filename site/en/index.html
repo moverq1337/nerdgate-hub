@@ -55,7 +55,7 @@
           </article>
           <article class="card">
             <h3>Clear install path</h3>
-            <p>The installer checks DNS before starting the stack, so the first HTTPS certificate request is not a guessing game.</p>
+            <p>The installer checks DNS, asks for the Let's Encrypt email, and gives you a one-time setup token for browser onboarding.</p>
           </article>
         </div>
       </section>
@@ -68,7 +68,7 @@
 
       <section class="section">
         <p class="eyebrow">Maintenance</p>
-        <h2>Password reset and uninstall are built in.</h2>
+        <h2>Password reset, diagnostics, and uninstall are built in.</h2>
         <div class="card-grid">
           <article class="card">
             <h3>Reset password</h3>
@@ -81,11 +81,9 @@
             <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
           </article>
           <article class="card">
-            <h3>Update</h3>
-            <p>Pull the latest container image and recreate the service.</p>
-            <code>cd /opt/nerdgate-hub</code>
-            <code>docker compose pull</code>
-            <code>docker compose up -d</code>
+            <h3>Diagnostics</h3>
+            <p>Prints Traefik logs and hints for DNS, ports, ACME, and certificate failures.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
           </article>
         </div>
       </section>

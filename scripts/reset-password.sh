@@ -78,6 +78,14 @@ set_env_value() {
   mv "$tmp" "$file"
 }
 
+delete_env_key() {
+  file="$1"
+  key="$2"
+  tmp="$file.tmp"
+  awk -v key="$key" '$0 !~ "^" key "=" { print }' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
 main() {
   [ -r /dev/tty ] || die "interactive terminal is required"
   command -v docker >/dev/null 2>&1 || die "docker is required"
@@ -116,8 +124,8 @@ main() {
 
   session_secret="$(random_hex 32)"
   set_env_value "$env_file" "NERDGATE_USERNAME" "$username"
-  set_env_value "$env_file" "NERDGATE_PASSWORD" "$password"
   set_env_value "$env_file" "NERDGATE_SESSION_SECRET" "$session_secret"
+  delete_env_key "$env_file" "NERDGATE_PASSWORD"
 
   say "Recreating NerdGate Hub container..."
   (

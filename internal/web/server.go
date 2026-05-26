@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
@@ -21,6 +22,7 @@ type ServerConfig struct {
 }
 
 type Server struct {
+	sessionMu     sync.RWMutex
 	sessionSecret []byte
 	store         *store.Store
 	renderer      *traefik.Renderer
@@ -34,7 +36,7 @@ type pageData struct {
 	DockerTargets          []dockerclient.TargetOption
 	AvailableDockerTargets int
 	DockerError            string
-	Status                 string
+	StatusMessage          string
 	Error                  string
 }
 
@@ -53,6 +55,8 @@ func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.health)
 	mux.Handle("GET /static/", http.FileServerFS(staticFiles))
+	mux.HandleFunc("GET /setup", s.setup)
+	mux.HandleFunc("POST /setup", s.setupPost)
 	mux.HandleFunc("GET /login", s.login)
 	mux.HandleFunc("POST /login", s.loginPost)
 	mux.HandleFunc("POST /logout", s.withAuth(s.logout))
@@ -73,7 +77,7 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		Routes:                 s.store.List(),
 		DockerTargets:          dockerTargets,
 		AvailableDockerTargets: availableTargetCount(dockerTargets),
-		Status:                 r.URL.Query().Get("status"),
+		StatusMessage:          statusMessage(r.URL.Query().Get("status")),
 		Error:                  r.URL.Query().Get("error"),
 	}
 	if dockerErr != nil {
@@ -166,4 +170,17 @@ func availableTargetCount(options []dockerclient.TargetOption) int {
 		}
 	}
 	return count
+}
+
+func statusMessage(status string) string {
+	switch status {
+	case "created":
+		return "Route created."
+	case "deleted":
+		return "Route deleted."
+	case "setup-complete":
+		return "Setup complete. Welcome to NerdGate Hub."
+	default:
+		return ""
+	}
 }

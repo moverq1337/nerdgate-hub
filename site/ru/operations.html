@@ -24,7 +24,13 @@
       <section class="hero compact">
         <p class="eyebrow">Operations</p>
         <h1>Обслуживание должно быть понятным.</h1>
-        <p class="lead">В MVP основные операции явные: сброс пароля, удаление, проверка DNS и обновление контейнеров.</p>
+        <p class="lead">В MVP основные операции явные: диагностика, сброс пароля, удаление, проверка DNS и обновление контейнеров.</p>
+      </section>
+
+      <section class="section">
+        <h2>Диагностика</h2>
+        <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
+        <p>Скрипт показывает Compose status, Traefik logs, DNS check и типовые варианты исправления ошибок сертификатов.</p>
       </section>
 
       <section class="section">

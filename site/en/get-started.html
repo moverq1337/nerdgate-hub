@@ -40,13 +40,13 @@
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
           <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
         </div>
-        <p>The installer asks for install directory, panel domain, Let's Encrypt email, admin username, and password.</p>
+        <p>The installer asks for install directory, panel domain, and Let's Encrypt email. It prints a one-time setup token after the stack starts.</p>
       </section>
 
       <section class="section">
         <h2>3. Open the panel</h2>
         <code>https://nerdgate.example.com</code>
-        <p>Use the admin credentials from the installer.</p>
+        <p>Paste the setup token from the installer, then create the first admin username and password in the browser.</p>
       </section>
 
       <section class="section">
@@ -68,18 +68,22 @@
       </section>
 
       <section class="section">
-        <h2>5. Reset password or uninstall</h2>
+        <h2>5. Diagnose, reset password, or uninstall</h2>
         <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
         </div>
-        <p>The reset script updates the admin credentials in SQLite. The uninstall script stops the stack and can optionally remove the install directory.</p>
+        <p>The diagnostics script prints Traefik logs and common certificate fixes. The reset script updates admin credentials in SQLite. The uninstall script stops the stack and can optionally remove the install directory.</p>
       </section>
 
       <section class="section">
         <h2>Local development</h2>
-        <code>docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</code>
-        <p>Production install pulls <code>ghcr.io/moverq1337/nerdgate-hub:latest</code>; local development can still build from source.</p>
+        <div class="commands">
+          <code>cp .env.example .env</code>
+          <code>docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</code>
+        </div>
+        <p>Production install pulls <code>ghcr.io/moverq1337/nerdgate-hub:latest</code>; local development can still build from source. Replace the example setup token before exposing the app to the internet.</p>
       </section>
     </main>
   </body>

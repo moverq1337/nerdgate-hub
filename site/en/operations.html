@@ -24,7 +24,13 @@
       <section class="hero compact">
         <p class="eyebrow">Operations</p>
         <h1>Keep the install understandable.</h1>
-        <p class="lead">The current MVP keeps operational tasks explicit: reset password, uninstall, check DNS, and update containers.</p>
+        <p class="lead">The current MVP keeps operational tasks explicit: diagnostics, reset password, uninstall, check DNS, and update containers.</p>
+      </section>
+
+      <section class="section">
+        <h2>Diagnostics</h2>
+        <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
+        <p>This prints Compose status, Traefik logs, DNS check output, and common fixes for certificate issuance failures.</p>
       </section>
 
       <section class="section">

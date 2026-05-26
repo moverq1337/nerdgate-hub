@@ -36,8 +36,9 @@ services:
       NERDGATE_DOCKER_SOCKET: /var/run/docker.sock
       NERDGATE_DOCKER_PROXY_NETWORK: nerdgate-proxy
       NERDGATE_SESSION_SECRET: "${NERDGATE_SESSION_SECRET:-}"
-      NERDGATE_USERNAME: "${NERDGATE_USERNAME:-admin}"
-      NERDGATE_PASSWORD: "${NERDGATE_PASSWORD:?Set NERDGATE_PASSWORD in .env}"
+      NERDGATE_SETUP_TOKEN: "${NERDGATE_SETUP_TOKEN:-}"
+      NERDGATE_USERNAME: "${NERDGATE_USERNAME:-}"
+      NERDGATE_PASSWORD: "${NERDGATE_PASSWORD:-}"
     volumes:
       - ./data/app:/data
       - ./data/traefik:/traefik-dynamic

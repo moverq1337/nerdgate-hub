@@ -55,7 +55,7 @@
           </article>
           <article class="card">
             <h3>Понятная установка</h3>
-            <p>Инсталлер проверяет DNS до запуска, чтобы сертификат не ломался на первом старте.</p>
+            <p>Инсталлер проверяет DNS, спрашивает email для Let's Encrypt и дает одноразовый setup token для onboarding в браузере.</p>
           </article>
         </div>
       </section>
@@ -68,7 +68,7 @@
 
       <section class="section">
         <p class="eyebrow">Обслуживание</p>
-        <h2>Сброс пароля и uninstall есть из коробки.</h2>
+        <h2>Сброс пароля, диагностика и uninstall есть из коробки.</h2>
         <div class="card-grid">
           <article class="card">
             <h3>Сброс пароля</h3>
@@ -81,11 +81,9 @@
             <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
           </article>
           <article class="card">
-            <h3>Обновление</h3>
-            <p>Скачивает свежий container image и пересоздает сервис.</p>
-            <code>cd /opt/nerdgate-hub</code>
-            <code>docker compose pull</code>
-            <code>docker compose up -d</code>
+            <h3>Диагностика</h3>
+            <p>Показывает Traefik logs и подсказки по DNS, портам, ACME и ошибкам сертификатов.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
           </article>
         </div>
       </section>

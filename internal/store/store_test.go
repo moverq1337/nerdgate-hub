@@ -79,6 +79,47 @@ func TestResetPasswordReplacesPreviousAdmin(t *testing.T) {
 	}
 }
 
+func TestCompleteSetupRequiresValidToken(t *testing.T) {
+	ctx := context.Background()
+	s, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.EnsureSetupToken(ctx, "setup-token"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.CompleteSetup(ctx, "wrong-token", "admin", "secret"); err == nil {
+		t.Fatal("expected invalid token to fail")
+	}
+
+	hasUsers, err := s.HasUsers(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasUsers {
+		t.Fatal("expected invalid setup to leave users empty")
+	}
+
+	if err := s.CompleteSetup(ctx, "setup-token", "admin", "secret"); err != nil {
+		t.Fatal(err)
+	}
+
+	ok, err := s.Authenticate(ctx, "admin", "secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("expected setup admin login to work")
+	}
+
+	if err := s.CompleteSetup(ctx, "setup-token", "admin", "new-secret"); err == nil {
+		t.Fatal("expected completed setup to reject repeated setup")
+	}
+}
+
 func TestStoreImportsRoutesJSON(t *testing.T) {
 	dir := t.TempDir()
 	data := `[

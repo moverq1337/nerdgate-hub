@@ -9,6 +9,7 @@ type Config struct {
 	DockerSocketPath   string
 	DockerProxyNetwork string
 	SessionSecret      string
+	SetupToken         string
 	Username           string
 	Password           string
 }
@@ -21,8 +22,9 @@ func FromEnv() Config {
 		DockerSocketPath:   env("NERDGATE_DOCKER_SOCKET", "/var/run/docker.sock"),
 		DockerProxyNetwork: env("NERDGATE_DOCKER_PROXY_NETWORK", "nerdgate-proxy"),
 		SessionSecret:      env("NERDGATE_SESSION_SECRET", ""),
+		SetupToken:         env("NERDGATE_SETUP_TOKEN", ""),
 		Username:           env("NERDGATE_USERNAME", "admin"),
-		Password:           env("NERDGATE_PASSWORD", "change-me"),
+		Password:           env("NERDGATE_PASSWORD", ""),
 	}
 }
 

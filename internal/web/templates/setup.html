@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>First setup - NerdGate Hub</title>
+    <link rel="icon" href="/static/logo.png">
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-card" aria-labelledby="setup-title">
+        <div class="brand-lockup">
+          <img src="/static/logo.png" alt="" aria-hidden="true">
+          <span>NerdGate Hub</span>
+        </div>
+        <h1 id="setup-title">First setup</h1>
+        <p class="lead">Paste the setup token from the installer, then create the first admin account.</p>
+
+        {{ if .Error }}
+        <div class="notice error">{{ .Error }}</div>
+        {{ end }}
+
+        <form class="login-form" method="post" action="/setup">
+          <label>
+            Setup token
+            <input name="setup_token" type="password" autocomplete="one-time-code" autofocus required>
+          </label>
+
+          <label>
+            Admin username
+            <input name="username" type="text" autocomplete="username" value="admin" required>
+          </label>
+
+          <label>
+            Admin password
+            <input name="password" type="password" autocomplete="new-password" required>
+          </label>
+
+          <label>
+            Confirm password
+            <input name="confirm_password" type="password" autocomplete="new-password" required>
+          </label>
+
+          <button type="submit">Create admin</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

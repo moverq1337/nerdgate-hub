@@ -36,12 +36,32 @@ func main() {
 	}
 	defer routeStore.Close()
 
-	if err := routeStore.EnsureAdminUser(context.Background(), cfg.Username, cfg.Password); err != nil {
-		logger.Error("ensure admin user", "error", err)
+	setupCtx := context.Background()
+	hasUsers, err := routeStore.HasUsers(setupCtx)
+	if err != nil {
+		logger.Error("check admin users", "error", err)
 		os.Exit(1)
 	}
+	if !hasUsers {
+		switch {
+		case cfg.SetupToken != "":
+			if err := routeStore.EnsureSetupToken(setupCtx, cfg.SetupToken); err != nil {
+				logger.Error("ensure setup token", "error", err)
+				os.Exit(1)
+			}
+			logger.Info("first-run setup is waiting for browser setup")
+		case cfg.Password != "":
+			if err := routeStore.EnsureAdminUser(setupCtx, cfg.Username, cfg.Password); err != nil {
+				logger.Error("ensure admin user", "error", err)
+				os.Exit(1)
+			}
+		default:
+			logger.Error("first-run setup token is required", "hint", "set NERDGATE_SETUP_TOKEN or NERDGATE_PASSWORD")
+			os.Exit(1)
+		}
+	}
 
-	sessionSecret, err := routeStore.EnsureSessionSecret(context.Background(), cfg.SessionSecret)
+	sessionSecret, err := routeStore.EnsureSessionSecret(setupCtx, cfg.SessionSecret)
 	if err != nil {
 		logger.Error("ensure session secret", "error", err)
 		os.Exit(1)

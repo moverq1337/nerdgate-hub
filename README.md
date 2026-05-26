@@ -40,6 +40,7 @@ Traefik still owns the hard traffic work: ports `80/443`, HTTPS, Let's Encrypt, 
 ### Features
 
 - One-line installer with DNS preflight.
+- Browser first-run setup with a one-time setup token.
 - Traefik dynamic config generation.
 - SQLite storage for routes, users, and settings.
 - Admin login with session cookies.
@@ -47,7 +48,7 @@ Traefik still owns the hard traffic work: ports `80/443`, HTTPS, Let's Encrypt, 
 - Published host-port targets: `http://host.docker.internal:3000`.
 - Internal Docker-network targets through `nerdgate-proxy`.
 - Remote targets: `http://203.0.113.10:8080`.
-- Password reset and uninstall scripts.
+- Password reset, diagnostics, and uninstall scripts.
 - Static bilingual docs site for GitHub Pages.
 
 ### Quick Install
@@ -70,7 +71,7 @@ or:
 wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh
 ```
 
-The installer checks DNS, creates `.env`, bootstraps the panel route, pulls the published image, and starts Docker Compose.
+The installer asks for the panel domain and Let's Encrypt email, checks DNS, creates `.env`, bootstraps the panel route, pulls the published image, and starts Docker Compose. It prints a one-time setup token. Open the panel URL, paste that token, and create the first admin account in the browser.
 
 ### Operations
 
@@ -84,6 +85,12 @@ Uninstall:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh
+```
+
+Diagnose HTTPS, Traefik, DNS, and certificate problems:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh
 ```
 
 Update:
@@ -105,8 +112,11 @@ ghcr.io/moverq1337/nerdgate-hub:latest
 For local source builds:
 
 ```sh
+cp .env.example .env
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
+
+For anything reachable from the internet, replace the example setup token before starting.
 
 Docs-only changes do not rebuild the service image. The Docker image workflow is limited to app files such as `Dockerfile`, `go.mod`, `go.sum`, `cmd/**`, and `internal/**`. Site changes only trigger the GitHub Pages workflow.
 
@@ -143,6 +153,7 @@ Traefik занимается трафиком: `80/443`, HTTPS, Let's Encrypt и
 ### Возможности
 
 - Установка одной командой с DNS-проверкой.
+- Первый запуск через одноразовый setup token в браузере.
 - Генерация Traefik dynamic config.
 - SQLite для routes, users и settings.
 - Login-панель с cookie-сессиями.
@@ -150,7 +161,7 @@ Traefik занимается трафиком: `80/443`, HTTPS, Let's Encrypt и
 - Маршруты на опубликованные host ports: `http://host.docker.internal:3000`.
 - Маршруты на контейнеры внутри Docker-сети `nerdgate-proxy`.
 - Маршруты на другой сервер: `http://203.0.113.10:8080`.
-- Скрипты сброса пароля и удаления.
+- Скрипты сброса пароля, диагностики и удаления.
 - Двуязычная документация на GitHub Pages.
 
 ### Быстрый старт
@@ -173,7 +184,7 @@ curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/script
 wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh
 ```
 
-Инсталлер проверит DNS, создаст `.env`, добавит стартовый route панели, скачает опубликованный Docker image и запустит Docker Compose.
+Инсталлер спросит домен панели и email для Let's Encrypt, проверит DNS, создаст `.env`, добавит стартовый route панели, скачает опубликованный Docker image и запустит Docker Compose. В конце он покажет одноразовый setup token. Открой URL панели, вставь token и создай первого admin-пользователя в браузере.
 
 ### Операции
 
@@ -187,6 +198,12 @@ curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/script
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh
+```
+
+Диагностика HTTPS, Traefik, DNS и сертификатов:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh
 ```
 
 Обновить:
@@ -208,8 +225,11 @@ ghcr.io/moverq1337/nerdgate-hub:latest
 Локальный build из исходников:
 
 ```sh
+cp .env.example .env
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
+
+Если окружение доступно из интернета, замени пример setup token перед запуском.
 
 Изменения в документации не пересобирают Docker image. Workflow сборки image ограничен файлами приложения: `Dockerfile`, `go.mod`, `go.sum`, `cmd/**`, `internal/**`. Изменения в `site/**` запускают только GitHub Pages.
 

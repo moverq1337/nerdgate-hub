@@ -18,7 +18,85 @@ type loginPageData struct {
 	Next  string
 }
 
+type setupPageData struct {
+	Error string
+}
+
+func (s *Server) setup(w http.ResponseWriter, r *http.Request) {
+	hasUsers, err := s.store.HasUsers(r.Context())
+	if err != nil {
+		s.logger.Error("check setup state", "error", err)
+		http.Error(w, "setup state failed", http.StatusInternalServerError)
+		return
+	}
+	if hasUsers {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	data := setupPageData{
+		Error: r.URL.Query().Get("error"),
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.tmpl.ExecuteTemplate(w, "setup.html", data); err != nil {
+		s.logger.Error("render setup", "error", err)
+		http.Error(w, "render failed", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) setupPost(w http.ResponseWriter, r *http.Request) {
+	hasUsers, err := s.store.HasUsers(r.Context())
+	if err != nil {
+		s.logger.Error("check setup state", "error", err)
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape("Setup failed"), http.StatusSeeOther)
+		return
+	}
+	if hasUsers {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape("Invalid form"), http.StatusSeeOther)
+		return
+	}
+
+	username := strings.TrimSpace(r.FormValue("username"))
+	password := r.FormValue("password")
+	if password != r.FormValue("confirm_password") {
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape("Passwords do not match"), http.StatusSeeOther)
+		return
+	}
+
+	if err := s.store.CompleteSetup(r.Context(), r.FormValue("setup_token"), username, password); err != nil {
+		s.logger.Warn("setup failed", "error", err)
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	if secret, err := s.store.Setting(r.Context(), "session_secret"); err == nil && secret != "" {
+		s.setSessionSecret(secret)
+	} else if err != nil {
+		s.logger.Warn("setup completed but session secret refresh failed", "error", err)
+	}
+
+	http.SetCookie(w, s.newSessionCookie(username))
+	http.Redirect(w, r, "/?status=setup-complete", http.StatusSeeOther)
+}
+
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+	hasUsers, err := s.store.HasUsers(r.Context())
+	if err != nil {
+		s.logger.Error("check setup state", "error", err)
+		http.Error(w, "setup state failed", http.StatusInternalServerError)
+		return
+	}
+	if !hasUsers {
+		http.Redirect(w, r, "/setup", http.StatusSeeOther)
+		return
+	}
+
 	if s.isAuthenticated(r) {
 		http.Redirect(w, r, safeNext(r.URL.Query().Get("next")), http.StatusSeeOther)
 		return
@@ -37,6 +115,17 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) loginPost(w http.ResponseWriter, r *http.Request) {
+	hasUsers, err := s.store.HasUsers(r.Context())
+	if err != nil {
+		s.logger.Error("check setup state", "error", err)
+		http.Redirect(w, r, "/login?error="+url.QueryEscape("Login failed"), http.StatusSeeOther)
+		return
+	}
+	if !hasUsers {
+		http.Redirect(w, r, "/setup", http.StatusSeeOther)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Redirect(w, r, "/login?error="+url.QueryEscape("Invalid form"), http.StatusSeeOther)
 		return
@@ -72,6 +161,17 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		hasUsers, err := s.store.HasUsers(r.Context())
+		if err != nil {
+			s.logger.Error("check setup state", "error", err)
+			http.Error(w, "setup state failed", http.StatusInternalServerError)
+			return
+		}
+		if !hasUsers {
+			http.Redirect(w, r, "/setup", http.StatusSeeOther)
+			return
+		}
+
 		if !s.isAuthenticated(r) {
 			nextURL := url.QueryEscape(r.URL.RequestURI())
 			http.Redirect(w, r, "/login?next="+nextURL, http.StatusSeeOther)
@@ -146,9 +246,22 @@ func (s *Server) validSession(r *http.Request) bool {
 }
 
 func (s *Server) sign(payload string) string {
-	mac := hmac.New(sha256.New, s.sessionSecret)
+	secret := s.currentSessionSecret()
+	mac := hmac.New(sha256.New, secret)
 	_, _ = mac.Write([]byte(payload))
 	return encodeBytes(mac.Sum(nil))
+}
+
+func (s *Server) setSessionSecret(value string) {
+	s.sessionMu.Lock()
+	defer s.sessionMu.Unlock()
+	s.sessionSecret = sessionSecret(value)
+}
+
+func (s *Server) currentSessionSecret() []byte {
+	s.sessionMu.RLock()
+	defer s.sessionMu.RUnlock()
+	return append([]byte(nil), s.sessionSecret...)
 }
 
 func sessionSecret(value string) []byte {
