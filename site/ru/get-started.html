@@ -68,6 +68,15 @@
       </section>
 
       <section class="section">
+        <h2>5. Сброс пароля или uninstall</h2>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
+        </div>
+        <p>Reset-скрипт обновляет admin credentials в SQLite. Uninstall-скрипт останавливает stack и может удалить папку установки.</p>
+      </section>
+
+      <section class="section">
         <h2>Локальная разработка</h2>
         <code>docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</code>
         <p>Production-установка тянет <code>ghcr.io/moverq1337/nerdgate-hub:latest</code>, а dev-режим билдит из исходников.</p>

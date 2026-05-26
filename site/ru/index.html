@@ -21,14 +21,24 @@
     </header>
 
     <main class="page">
-      <section class="hero">
-        <p class="eyebrow">Open-source edge panel</p>
-        <h1>Домены к контейнерам и портам без лишней платформы.</h1>
-        <p class="lead">NerdGate Hub - минимальная панель поверх Traefik. Ее задача простая: направить домен на Docker-контейнер, локальный порт или внешний HTTP-сервис.</p>
-        <div class="commands">
-          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
-          <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+      <section class="hero hero-grid">
+        <div>
+          <p class="eyebrow">Open-source edge panel</p>
+          <h1>Домены к контейнерам и портам без лишней платформы.</h1>
+          <p class="lead">NerdGate Hub - минимальная панель поверх Traefik. Ее задача простая: направить домен на Docker-контейнер, локальный порт или внешний HTTP-сервис.</p>
+          <div class="commands">
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+            <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+          </div>
         </div>
+
+        <aside class="terminal" aria-label="NerdGate Hub flow preview">
+          <img class="terminal-logo" src="../logo.png" alt="NerdGate Hub">
+          <span>DNS: ok</span>
+          <span>Panel: nerdgate.example.com</span>
+          <span>Route: app.example.com -> container :3000</span>
+          <span>TLS: Let's Encrypt</span>
+        </aside>
       </section>
 
       <section class="section">
@@ -54,6 +64,30 @@
         <p class="eyebrow">Вместо Nginx Proxy Manager</p>
         <h2>Почему не просто NPM?</h2>
         <p>Nginx Proxy Manager полезен, но NerdGate Hub специально уже: Traefik-native, Docker-aware и без лишних настроек вокруг задачи <code>домен -> сервис</code>. Цель - меньше переключателей и более понятный workflow.</p>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Обслуживание</p>
+        <h2>Сброс пароля и uninstall есть из коробки.</h2>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Сброс пароля</h3>
+            <p>Обновляет credentials в SQLite и ротирует session secret.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
+          </article>
+          <article class="card">
+            <h3>Uninstall</h3>
+            <p>Останавливает Compose stack и может удалить папку установки.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
+          </article>
+          <article class="card">
+            <h3>Обновление</h3>
+            <p>Скачивает свежий container image и пересоздает сервис.</p>
+            <code>cd /opt/nerdgate-hub</code>
+            <code>docker compose pull</code>
+            <code>docker compose up -d</code>
+          </article>
+        </div>
       </section>
 
       <section class="section">
