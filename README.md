@@ -8,6 +8,14 @@ Project site:
 https://moverq1337.github.io/nerdgate-hub/
 ```
 
+If the Pages workflow fails with `Get Pages site failed`, enable Pages once in repository settings:
+
+```txt
+Settings -> Pages -> Build and deployment -> Source -> GitHub Actions
+```
+
+Alternatively, add a repository secret named `PAGES_TOKEN` with Pages/admin rights; the workflow can then enable Pages automatically.
+
 The first MVP is intentionally narrow:
 
 - one server
