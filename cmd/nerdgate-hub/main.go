@@ -19,6 +19,11 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		runCommand(os.Args[1], os.Args[2:])
+		return
+	}
+
 	cfg := config.FromEnv()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{

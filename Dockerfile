@@ -4,7 +4,6 @@ WORKDIR /src
 COPY go.mod ./
 COPY cmd ./cmd
 COPY internal ./internal
-COPY web ./web
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/nerdgate-hub ./cmd/nerdgate-hub
 

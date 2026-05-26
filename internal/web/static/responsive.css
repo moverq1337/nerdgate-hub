@@ -1,0 +1,48 @@
+@media (max-width: 920px) {
+  h1 {
+    font-size: 34px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .route-form {
+    grid-template-columns: 1fr;
+  }
+
+  .target-mode {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mode-option {
+    width: 100%;
+  }
+
+  .routes {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 560px) {
+  .shell {
+    width: min(100vw - 24px, 1160px);
+    padding: 18px 0;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .panel,
+  .login-card {
+    padding: 16px;
+  }
+}
+

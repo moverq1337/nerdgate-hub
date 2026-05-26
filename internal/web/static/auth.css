@@ -1,0 +1,30 @@
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.login-shell {
+  width: min(440px, calc(100vw - 32px));
+  animation: page-in 360ms ease both;
+}
+
+.login-card {
+  padding: 28px;
+}
+
+.login-card h1 {
+  font-size: 42px;
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.login-form button {
+  width: 100%;
+  margin-top: 4px;
+}
+

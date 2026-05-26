@@ -1,0 +1,55 @@
+.routes {
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+tbody tr {
+  transition: background-color 160ms ease;
+}
+
+tbody tr:hover {
+  background: rgba(16, 16, 16, 0.025);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.empty {
+  display: grid;
+  gap: 7px;
+  padding: 42px 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--text);
+  font-size: 18px;
+}
+

@@ -14,6 +14,22 @@ The first MVP is intentionally narrow:
 
 ## Quick Start
 
+One-line installer:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh
+```
+
+or:
+
+```sh
+wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh
+```
+
+The installer asks for the panel domain, checks that its DNS resolves to the server public IP, generates secrets, bootstraps the panel route, and starts Docker Compose.
+
+Manual install:
+
 1. Copy the example environment file:
 
 ```sh
@@ -36,6 +52,16 @@ http://SERVER_IP:8080
 
 Use the username and password from `.env`.
 
+## DNS Requirement
+
+For the public panel domain, create an A record before installation:
+
+```txt
+nerdgate.example.com -> SERVER_PUBLIC_IP
+```
+
+The installer stops if the domain does not resolve to the current server. This is required for Traefik to receive Let's Encrypt HTTP-01 challenges on ports `80` and `443`.
+
 ## Routing To Host Ports
 
 When the target app runs directly on the host, use:
@@ -45,6 +71,17 @@ http://host.docker.internal:3000
 ```
 
 The Compose file maps `host.docker.internal` to the Docker host gateway on Linux.
+
+## Routing To Remote Servers
+
+Manual targets can point to another server by IP address or hostname:
+
+```txt
+http://203.0.113.10:8080
+http://app.internal.example.com:3000
+```
+
+Traefik must be able to reach that address from the NerdGate Hub server. Open firewalls/security groups only for the NerdGate Hub server when possible.
 
 ## Routing To Docker Containers
 
@@ -73,6 +110,15 @@ http://CONTAINER_NAME:3000
 ```
 
 Docker socket access is powerful. Treat the NerdGate Hub panel as an admin-only surface and protect it with a strong password.
+
+## Diagnostics
+
+After building the binary, DNS can be checked manually:
+
+```sh
+nerdgate-hub check-domain nerdgate.example.com
+nerdgate-hub check-domain nerdgate.example.com 203.0.113.10
+```
 
 ## Generated Traefik Config
 

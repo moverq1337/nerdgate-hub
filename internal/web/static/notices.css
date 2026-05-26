@@ -1,0 +1,28 @@
+.notice {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+  font-size: 14px;
+  animation: slide-in 220ms ease both;
+}
+
+.notice.success {
+  border-color: rgba(21, 87, 36, 0.26);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.notice.error {
+  border-color: rgba(159, 29, 29, 0.22);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.notice.warning {
+  border-color: rgba(111, 77, 0, 0.2);
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
