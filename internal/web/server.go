@@ -1,12 +1,15 @@
 package web
 
 import (
+	"context"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
@@ -32,13 +35,17 @@ type Server struct {
 }
 
 type pageData struct {
-	Routes                 []store.Route
+	Routes                 []RouteView
 	DockerTargets          []dockerclient.TargetOption
+	AttachableTargets      []dockerclient.TargetOption
 	AvailableDockerTargets int
+	Diagnostics            DiagnosticsData
 	DockerError            string
 	StatusMessage          string
 	Error                  string
 }
+
+var domainSplitPattern = regexp.MustCompile(`[,\s]+`)
 
 func NewServer(cfg ServerConfig) *Server {
 	return &Server{
@@ -62,7 +69,9 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /logout", s.withAuth(s.logout))
 	mux.HandleFunc("GET /", s.withAuth(s.index))
 	mux.HandleFunc("POST /routes", s.withAuth(s.createRoute))
+	mux.HandleFunc("POST /routes/{id}", s.withAuth(s.updateRoute))
 	mux.HandleFunc("POST /routes/{id}/delete", s.withAuth(s.deleteRoute))
+	mux.HandleFunc("POST /containers/{id}/attach", s.withAuth(s.attachContainer))
 	return mux
 }
 
@@ -71,12 +80,17 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
-	dockerTargets, dockerErr := s.dockerTargets(r)
+	routes := s.store.List()
+	routeViews := routeViews(r.Context(), routes)
+	containers, dockerErr := s.dockerContainers(r)
+	dockerTargets := dockerclient.TargetOptions(containers)
 
 	data := pageData{
-		Routes:                 s.store.List(),
+		Routes:                 routeViews,
 		DockerTargets:          dockerTargets,
+		AttachableTargets:      attachableTargets(dockerTargets),
 		AvailableDockerTargets: availableTargetCount(dockerTargets),
+		Diagnostics:            s.diagnostics(r.Context(), routeViews, containers, dockerErr),
 		StatusMessage:          statusMessage(r.URL.Query().Get("status")),
 		Error:                  r.URL.Query().Get("error"),
 	}
@@ -98,13 +112,22 @@ func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := store.RouteInput{
-		Domain:    r.FormValue("domain"),
-		TargetURL: routeTargetURL(r),
-		TLS:       r.FormValue("tls") == "on",
+	domains := parseDomains(r.FormValue("domains"))
+	if len(domains) == 0 {
+		s.redirectError(w, r, "at least one domain is required")
+		return
 	}
 
-	if _, err := s.store.Create(input); err != nil {
+	inputs := make([]store.RouteInput, 0, len(domains))
+	for _, domain := range domains {
+		inputs = append(inputs, store.RouteInput{
+			Domain:    domain,
+			TargetURL: routeTargetURL(r),
+			TLS:       r.FormValue("tls") == "on",
+		})
+	}
+
+	if _, err := s.store.CreateRoutes(r.Context(), inputs); err != nil {
 		s.redirectError(w, r, err.Error())
 		return
 	}
@@ -116,6 +139,32 @@ func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/?status=created", http.StatusSeeOther)
+}
+
+func (s *Server) updateRoute(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		s.redirectError(w, r, "invalid form")
+		return
+	}
+
+	input := store.RouteInput{
+		Domain:    r.FormValue("domain"),
+		TargetURL: r.FormValue("target_url"),
+		TLS:       r.FormValue("tls") == "on",
+	}
+
+	if _, err := s.store.Update(r.PathValue("id"), input); err != nil {
+		s.redirectError(w, r, err.Error())
+		return
+	}
+
+	if err := s.renderer.Render(s.store.List()); err != nil {
+		s.logger.Error("render traefik config", "error", err)
+		s.redirectError(w, r, "route updated, but Traefik config render failed")
+		return
+	}
+
+	http.Redirect(w, r, "/?status=updated", http.StatusSeeOther)
 }
 
 func (s *Server) deleteRoute(w http.ResponseWriter, r *http.Request) {
@@ -134,17 +183,30 @@ func (s *Server) deleteRoute(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/?status=deleted", http.StatusSeeOther)
 }
 
-func (s *Server) dockerTargets(r *http.Request) ([]dockerclient.TargetOption, error) {
+func (s *Server) attachContainer(w http.ResponseWriter, r *http.Request) {
+	if s.docker == nil {
+		s.redirectError(w, r, "Docker API is unavailable")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := s.docker.ConnectContainerToProxyNetwork(ctx, r.PathValue("id")); err != nil {
+		s.logger.Warn("attach container failed", "error", err)
+		s.redirectError(w, r, err.Error())
+		return
+	}
+
+	http.Redirect(w, r, "/?status=attached", http.StatusSeeOther)
+}
+
+func (s *Server) dockerContainers(r *http.Request) ([]dockerclient.Container, error) {
 	if s.docker == nil {
 		return nil, nil
 	}
 
-	containers, err := s.docker.ListContainers(r.Context())
-	if err != nil {
-		return nil, err
-	}
-
-	return dockerclient.TargetOptions(containers), nil
+	return s.docker.ListContainers(r.Context())
 }
 
 func routeTargetURL(r *http.Request) string {
@@ -172,12 +234,48 @@ func availableTargetCount(options []dockerclient.TargetOption) int {
 	return count
 }
 
+func attachableTargets(options []dockerclient.TargetOption) []dockerclient.TargetOption {
+	targets := make([]dockerclient.TargetOption, 0)
+	seen := make(map[string]bool)
+	for _, option := range options {
+		if option.Available || option.Kind != "unavailable" || option.ContainerID == "" {
+			continue
+		}
+		key := option.ContainerID
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		targets = append(targets, option)
+	}
+	return targets
+}
+
+func parseDomains(value string) []string {
+	parts := domainSplitPattern.Split(value, -1)
+	domains := make([]string, 0, len(parts))
+	seen := make(map[string]bool)
+	for _, part := range parts {
+		domain := strings.ToLower(strings.TrimSpace(part))
+		if domain == "" || seen[domain] {
+			continue
+		}
+		seen[domain] = true
+		domains = append(domains, domain)
+	}
+	return domains
+}
+
 func statusMessage(status string) string {
 	switch status {
 	case "created":
 		return "Route created."
 	case "deleted":
 		return "Route deleted."
+	case "updated":
+		return "Route updated."
+	case "attached":
+		return "Container attached to nerdgate-proxy. Internal targets are available now."
 	case "setup-complete":
 		return "Setup complete. Welcome to NerdGate Hub."
 	default:

@@ -30,7 +30,16 @@
       <section class="section">
         <h2>Диагностика</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
-        <p>Скрипт показывает Compose status, Traefik logs, DNS check и типовые варианты исправления ошибок сертификатов.</p>
+        <p>Панель тоже показывает target health, статус Traefik config, Docker API и свежие Traefik logs. Shell-скрипт показывает Compose status, DNS check и типовые варианты исправления ошибок сертификатов.</p>
+      </section>
+
+      <section class="section">
+        <h2>Tagged releases</h2>
+        <div class="commands">
+          <code>git tag v0.1.0</code>
+          <code>git push origin v0.1.0</code>
+        </div>
+        <p>Push тега создает GitHub Release и публикует такой же GHCR image tag.</p>
       </section>
 
       <section class="section">

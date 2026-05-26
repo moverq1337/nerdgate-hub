@@ -68,6 +68,7 @@ label {
 input[type="text"],
 input[type="url"],
 input[type="password"],
+textarea,
 select {
   width: 100%;
   min-height: 44px;
@@ -81,6 +82,7 @@ select {
 input[type="text"]:hover,
 input[type="url"]:hover,
 input[type="password"]:hover,
+textarea:hover,
 select:hover {
   border-color: #a9a9a3;
 }
@@ -88,9 +90,15 @@ select:hover {
 input[type="text"]:focus,
 input[type="url"]:focus,
 input[type="password"]:focus,
+textarea:focus,
 select:focus {
   border-color: var(--line-strong);
   outline: 3px solid rgba(16, 16, 16, 0.12);
+}
+
+textarea {
+  min-height: 76px;
+  resize: vertical;
 }
 
 select {
@@ -180,3 +188,16 @@ select {
   accent-color: var(--text);
 }
 
+.table-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.table-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--text);
+}

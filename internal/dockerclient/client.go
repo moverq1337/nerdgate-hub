@@ -1,9 +1,11 @@
 package dockerclient
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"sort"
@@ -24,6 +26,7 @@ type Container struct {
 	Image  string
 	State  string
 	Status string
+	Labels map[string]string
 	Ports  []Port
 }
 
@@ -36,19 +39,23 @@ type Port struct {
 }
 
 type TargetOption struct {
-	Label     string
-	Value     string
-	Available bool
-	Kind      string
+	Label         string
+	Value         string
+	Available     bool
+	Kind          string
+	ContainerID   string
+	ContainerName string
+	PrivatePort   int
 }
 
 type apiContainer struct {
-	ID     string    `json:"Id"`
-	Names  []string  `json:"Names"`
-	Image  string    `json:"Image"`
-	State  string    `json:"State"`
-	Status string    `json:"Status"`
-	Ports  []apiPort `json:"Ports"`
+	ID     string            `json:"Id"`
+	Names  []string          `json:"Names"`
+	Image  string            `json:"Image"`
+	State  string            `json:"State"`
+	Status string            `json:"Status"`
+	Labels map[string]string `json:"Labels"`
+	Ports  []apiPort         `json:"Ports"`
 }
 
 type apiPort struct {
@@ -146,6 +153,7 @@ func (c *Client) ListContainers(ctx context.Context) ([]Container, error) {
 			Image:  api.Image,
 			State:  api.State,
 			Status: api.Status,
+			Labels: api.Labels,
 			Ports:  ports,
 		})
 	}
@@ -177,10 +185,13 @@ func TargetOptions(containers []Container) []TargetOption {
 				if !seen[key] {
 					seen[key] = true
 					options = append(options, TargetOption{
-						Label:     fmt.Sprintf("%s - published :%d -> :%d/%s", container.Name, port.PublicPort, port.PrivatePort, port.Type),
-						Value:     value,
-						Available: true,
-						Kind:      "published",
+						Label:         fmt.Sprintf("%s - published :%d -> :%d/%s", container.Name, port.PublicPort, port.PrivatePort, port.Type),
+						Value:         value,
+						Available:     true,
+						Kind:          "published",
+						ContainerID:   container.ID,
+						ContainerName: container.Name,
+						PrivatePort:   port.PrivatePort,
 					})
 				}
 			}
@@ -191,10 +202,13 @@ func TargetOptions(containers []Container) []TargetOption {
 				if !seen[key] {
 					seen[key] = true
 					options = append(options, TargetOption{
-						Label:     fmt.Sprintf("%s - internal :%d/%s", container.Name, port.PrivatePort, port.Type),
-						Value:     value,
-						Available: true,
-						Kind:      "internal",
+						Label:         fmt.Sprintf("%s - internal :%d/%s", container.Name, port.PrivatePort, port.Type),
+						Value:         value,
+						Available:     true,
+						Kind:          "internal",
+						ContainerID:   container.ID,
+						ContainerName: container.Name,
+						PrivatePort:   port.PrivatePort,
 					})
 				}
 				continue
@@ -205,9 +219,12 @@ func TargetOptions(containers []Container) []TargetOption {
 				if !seen[key] {
 					seen[key] = true
 					options = append(options, TargetOption{
-						Label:     fmt.Sprintf("%s - :%d/%s - attach to nerdgate-proxy", container.Name, port.PrivatePort, port.Type),
-						Available: false,
-						Kind:      "unavailable",
+						Label:         fmt.Sprintf("%s - :%d/%s - attach to nerdgate-proxy", container.Name, port.PrivatePort, port.Type),
+						Available:     false,
+						Kind:          "unavailable",
+						ContainerID:   container.ID,
+						ContainerName: container.Name,
+						PrivatePort:   port.PrivatePort,
 					})
 				}
 			}
@@ -219,6 +236,107 @@ func TargetOptions(containers []Container) []TargetOption {
 	})
 
 	return options
+}
+
+func (c *Client) ConnectContainerToProxyNetwork(ctx context.Context, containerID string) error {
+	if strings.TrimSpace(c.socketPath) == "" {
+		return fmt.Errorf("docker socket path is empty")
+	}
+	if c.proxyNetwork == "" {
+		return fmt.Errorf("docker proxy network is not configured")
+	}
+	containerID = strings.TrimSpace(containerID)
+	if containerID == "" {
+		return fmt.Errorf("container id is required")
+	}
+
+	body, err := json.Marshal(map[string]string{
+		"Container": containerID,
+	})
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://docker/networks/"+c.proxyNetwork+"/connect", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+	data, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+	detail := strings.TrimSpace(string(data))
+	if detail == "" {
+		detail = resp.Status
+	}
+	return fmt.Errorf("docker network connect returned %s: %s", resp.Status, detail)
+}
+
+func (c *Client) ContainerLogs(ctx context.Context, containerID string, tail int) (string, error) {
+	if strings.TrimSpace(c.socketPath) == "" {
+		return "", fmt.Errorf("docker socket path is empty")
+	}
+	containerID = strings.TrimSpace(containerID)
+	if containerID == "" {
+		return "", fmt.Errorf("container id is required")
+	}
+	if tail <= 0 {
+		tail = 120
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://docker/containers/%s/logs?stdout=1&stderr=1&tail=%d", containerID, tail), nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		detail := strings.TrimSpace(string(data))
+		if detail == "" {
+			detail = resp.Status
+		}
+		return "", fmt.Errorf("docker logs returned %s: %s", resp.Status, detail)
+	}
+
+	return strings.TrimSpace(decodeLogPayload(data)), nil
+}
+
+func decodeLogPayload(data []byte) string {
+	if len(data) < 8 || data[0] < 1 || data[0] > 2 {
+		return string(data)
+	}
+
+	var out strings.Builder
+	for len(data) >= 8 {
+		size := int(data[4])<<24 | int(data[5])<<16 | int(data[6])<<8 | int(data[7])
+		data = data[8:]
+		if size < 0 || size > len(data) {
+			return out.String() + string(data)
+		}
+		out.Write(data[:size])
+		data = data[size:]
+	}
+	if len(data) > 0 {
+		out.Write(data)
+	}
+	return out.String()
 }
 
 func (c *Client) inspectContainer(ctx context.Context, id string) (inspectContainer, error) {

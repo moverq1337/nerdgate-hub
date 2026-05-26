@@ -107,10 +107,45 @@ func (s *Store) Create(input RouteInput) (Route, error) {
 }
 
 func (s *Store) CreateRoute(ctx context.Context, input RouteInput) (Route, error) {
-	if err := validateInput(input); err != nil {
+	routes, err := s.CreateRoutes(ctx, []RouteInput{input})
+	if err != nil {
 		return Route{}, err
 	}
+	return routes[0], nil
+}
 
+func (s *Store) CreateRoutes(ctx context.Context, inputs []RouteInput) ([]Route, error) {
+	if len(inputs) == 0 {
+		return nil, errors.New("at least one route is required")
+	}
+	for _, input := range inputs {
+		if err := validateInput(input); err != nil {
+			return nil, err
+		}
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	routes := make([]Route, 0, len(inputs))
+	for _, input := range inputs {
+		route, err := insertRoute(ctx, tx, input)
+		if err != nil {
+			return nil, err
+		}
+		routes = append(routes, route)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return routes, nil
+}
+
+func insertRoute(ctx context.Context, tx *sql.Tx, input RouteInput) (Route, error) {
 	now := time.Now().UTC()
 	route := Route{
 		ID:        newID(now),
@@ -121,7 +156,7 @@ func (s *Store) CreateRoute(ctx context.Context, input RouteInput) (Route, error
 		UpdatedAt: now,
 	}
 
-	_, err := s.db.ExecContext(ctx, `
+	_, err := tx.ExecContext(ctx, `
 		INSERT INTO routes (id, domain, target_url, tls, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`, route.ID, route.Domain, route.TargetURL, boolInt(route.TLS), route.CreatedAt, route.UpdatedAt)
@@ -132,6 +167,64 @@ func (s *Store) CreateRoute(ctx context.Context, input RouteInput) (Route, error
 		return Route{}, err
 	}
 
+	return route, nil
+}
+
+func (s *Store) Update(id string, input RouteInput) (Route, error) {
+	return s.UpdateRoute(context.Background(), id, input)
+}
+
+func (s *Store) UpdateRoute(ctx context.Context, id string, input RouteInput) (Route, error) {
+	if strings.TrimSpace(id) == "" {
+		return Route{}, errors.New("route id is required")
+	}
+	if err := validateInput(input); err != nil {
+		return Route{}, err
+	}
+
+	now := time.Now().UTC()
+	route := Route{
+		ID:        strings.TrimSpace(id),
+		Domain:    normalizeDomain(input.Domain),
+		TargetURL: strings.TrimSpace(input.TargetURL),
+		TLS:       input.TLS,
+		UpdatedAt: now,
+	}
+
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE routes
+		SET domain = ?, target_url = ?, tls = ?, updated_at = ?
+		WHERE id = ?
+	`, route.Domain, route.TargetURL, boolInt(route.TLS), route.UpdatedAt, route.ID)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE") {
+			return Route{}, fmt.Errorf("domain %q already exists", route.Domain)
+		}
+		return Route{}, err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return Route{}, err
+	}
+	if affected == 0 {
+		return Route{}, fmt.Errorf("route %q not found", route.ID)
+	}
+
+	return s.routeByID(ctx, route.ID)
+}
+
+func (s *Store) routeByID(ctx context.Context, id string) (Route, error) {
+	var route Route
+	var tls int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, domain, target_url, tls, created_at, updated_at
+		FROM routes
+		WHERE id = ?
+	`, id).Scan(&route.ID, &route.Domain, &route.TargetURL, &tls, &route.CreatedAt, &route.UpdatedAt)
+	if err != nil {
+		return Route{}, err
+	}
+	route.TLS = tls == 1
 	return route, nil
 }
 

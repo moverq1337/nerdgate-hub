@@ -40,6 +40,52 @@ tbody tr:last-child td {
   white-space: nowrap;
 }
 
+.actions-inner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+td input[type="text"],
+td input[type="url"] {
+  min-width: 220px;
+}
+
+.route-link {
+  display: inline-flex;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.health-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.health-chip.up {
+  border-color: rgba(21, 87, 36, 0.26);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.health-chip.down {
+  border-color: rgba(159, 29, 29, 0.22);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.health-chip.checking {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
 .empty {
   display: grid;
   gap: 7px;
@@ -52,4 +98,3 @@ tbody tr:last-child td {
   color: var(--text);
   font-size: 18px;
 }
-

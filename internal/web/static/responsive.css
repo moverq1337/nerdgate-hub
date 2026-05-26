@@ -11,6 +11,10 @@
     grid-template-columns: 1fr;
   }
 
+  .diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+
   .target-mode {
     align-items: stretch;
     flex-direction: column;
@@ -40,9 +44,13 @@
     justify-content: space-between;
   }
 
+  .attach-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .panel,
   .login-card {
     padding: 16px;
   }
 }
-

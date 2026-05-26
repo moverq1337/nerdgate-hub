@@ -20,6 +20,10 @@ func NewRenderer(path string) *Renderer {
 	return &Renderer{path: path}
 }
 
+func (r *Renderer) Path() string {
+	return r.path
+}
+
 func (r *Renderer) Render(routes []store.Route) error {
 	if err := os.MkdirAll(filepath.Dir(r.path), 0o755); err != nil {
 		return err

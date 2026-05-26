@@ -44,11 +44,16 @@ Traefik still owns the hard traffic work: ports `80/443`, HTTPS, Let's Encrypt, 
 - Traefik dynamic config generation.
 - SQLite storage for routes, users, and settings.
 - Admin login with session cookies.
+- Multiple domains can be created in one route form submission.
+- Inline route editing.
 - Docker container picker through Docker Engine API.
 - Published host-port targets: `http://host.docker.internal:3000`.
 - Internal Docker-network targets through `nerdgate-proxy`.
+- Attach containers to `nerdgate-proxy` from the panel.
 - Remote targets: `http://203.0.113.10:8080`.
-- Password reset, diagnostics, and uninstall scripts.
+- Target health checks and in-panel diagnostics.
+- Password reset, shell diagnostics, and uninstall scripts.
+- Tagged GitHub releases like `v0.1.0`.
 - Static bilingual docs site for GitHub Pages.
 
 ### Quick Install
@@ -100,6 +105,15 @@ cd /opt/nerdgate-hub
 docker compose pull
 docker compose up -d
 ```
+
+Create a tagged release:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow creates a GitHub Release, and the Docker workflow publishes the matching GHCR tag.
 
 ### Local Development
 
@@ -157,11 +171,16 @@ Traefik занимается трафиком: `80/443`, HTTPS, Let's Encrypt и
 - Генерация Traefik dynamic config.
 - SQLite для routes, users и settings.
 - Login-панель с cookie-сессиями.
+- Несколько доменов можно создать одной отправкой формы.
+- Inline-редактирование routes.
 - Выбор Docker-контейнера через Docker Engine API.
 - Маршруты на опубликованные host ports: `http://host.docker.internal:3000`.
 - Маршруты на контейнеры внутри Docker-сети `nerdgate-proxy`.
+- Подключение контейнера к `nerdgate-proxy` из панели.
 - Маршруты на другой сервер: `http://203.0.113.10:8080`.
-- Скрипты сброса пароля, диагностики и удаления.
+- Health checks для targets и diagnostics прямо в панели.
+- Скрипты сброса пароля, shell-диагностики и удаления.
+- Tagged GitHub releases вроде `v0.1.0`.
 - Двуязычная документация на GitHub Pages.
 
 ### Быстрый старт
@@ -214,6 +233,15 @@ docker compose pull
 docker compose up -d
 ```
 
+Создать tagged release:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Release workflow создаст GitHub Release, а Docker workflow опубликует такой же GHCR tag.
+
 ### Разработка
 
 Production-установка использует готовый image:
@@ -243,10 +271,6 @@ data/acme/acme.json        Let's Encrypt certificates
 
 ### Roadmap
 
-- first-run setup tokens;
-- route editing;
-- target health checks;
 - Cloudflare DNS automation;
-- attach-container-to-network action;
-- tagged releases like `v0.1.0`;
-- multi-server agent mode.
+- multi-server agent mode;
+- optional tunnel mode for servers without public 80/443.

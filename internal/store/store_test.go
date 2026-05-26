@@ -47,6 +47,44 @@ func TestStoreRoutesAndAuth(t *testing.T) {
 	}
 }
 
+func TestCreateRoutesAndUpdateRoute(t *testing.T) {
+	ctx := context.Background()
+	s, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	routes, err := s.CreateRoutes(ctx, []RouteInput{
+		{Domain: "one.example.com", TargetURL: "http://host.docker.internal:3000", TLS: true},
+		{Domain: "two.example.com", TargetURL: "http://host.docker.internal:3000", TLS: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(routes) != 2 {
+		t.Fatalf("expected 2 routes, got %d", len(routes))
+	}
+
+	updated, err := s.UpdateRoute(ctx, routes[0].ID, RouteInput{
+		Domain:    "edited.example.com",
+		TargetURL: "http://203.0.113.10:8080",
+		TLS:       false,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Domain != "edited.example.com" {
+		t.Fatalf("unexpected updated domain: %s", updated.Domain)
+	}
+	if updated.TargetURL != "http://203.0.113.10:8080" {
+		t.Fatalf("unexpected updated target: %s", updated.TargetURL)
+	}
+	if updated.TLS {
+		t.Fatal("expected TLS to be disabled")
+	}
+}
+
 func TestResetPasswordReplacesPreviousAdmin(t *testing.T) {
 	ctx := context.Background()
 	s, err := Open(t.TempDir())

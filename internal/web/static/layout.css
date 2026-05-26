@@ -105,3 +105,84 @@
   color: var(--muted);
   font-size: 14px;
 }
+
+.attach-list,
+.diagnostics-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.attach-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.attach-item div {
+  display: grid;
+  gap: 4px;
+}
+
+.attach-item span,
+.diagnostic-item span,
+.hint-list p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.diagnostics-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.diagnostic-item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.diagnostic-item strong {
+  font-size: 14px;
+}
+
+.hint-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hint-list p {
+  margin: 0;
+  border-left: 2px solid var(--line-strong);
+  padding-left: 10px;
+  line-height: 1.45;
+}
+
+.log-box {
+  margin-top: 14px;
+}
+
+.log-box summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.log-box pre {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #101010;
+  color: #f7f7f5;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}

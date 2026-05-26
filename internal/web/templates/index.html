@@ -43,14 +43,15 @@
         <div class="panel-head">
           <div>
             <h2>New Route</h2>
-            <p>Point a domain to a container or URL.</p>
+            <p>Point one or several domains to a container or URL.</p>
           </div>
         </div>
 
         <form class="route-form" method="post" action="/routes">
           <label class="field domain-field">
-            Domain
-            <input name="domain" type="text" placeholder="app.example.com" autocomplete="off" required>
+            Domains
+            <textarea name="domains" placeholder="app.example.com&#10;api.example.com" autocomplete="off" required></textarea>
+            <span class="field-hint">Use commas, spaces, or new lines for multiple domains.</span>
           </label>
 
           <fieldset class="target-mode">
@@ -97,6 +98,63 @@
         </form>
       </section>
 
+      {{ if .AttachableTargets }}
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Attach Containers</h2>
+            <p>Connect containers without published ports to nerdgate-proxy.</p>
+          </div>
+        </div>
+        <div class="attach-list">
+          {{ range .AttachableTargets }}
+          <form class="attach-item" method="post" action="/containers/{{ .ContainerID }}/attach">
+            <div>
+              <strong>{{ .ContainerName }}</strong>
+              <span>{{ .PrivatePort }}/tcp needs network access</span>
+            </div>
+            <button class="secondary-button" type="submit">Attach</button>
+          </form>
+          {{ end }}
+        </div>
+      </section>
+      {{ end }}
+
+      <section class="panel diagnostics-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Diagnostics</h2>
+            <p>Live checks for route targets, Docker, Traefik config, and certificate clues.</p>
+          </div>
+        </div>
+        <div class="diagnostics-grid">
+          <div class="diagnostic-item">
+            <span>Traefik config</span>
+            <strong>{{ .Diagnostics.ConfigStatus }}</strong>
+            <code>{{ .Diagnostics.ConfigPath }}</code>
+          </div>
+          <div class="diagnostic-item">
+            <span>Docker API</span>
+            <strong>{{ .Diagnostics.DockerStatus }}</strong>
+          </div>
+          <div class="diagnostic-item">
+            <span>Targets</span>
+            <strong>{{ .Diagnostics.HealthStatus }}</strong>
+          </div>
+        </div>
+        <div class="hint-list">
+          {{ range .Diagnostics.Hints }}
+          <p>{{ . }}</p>
+          {{ end }}
+        </div>
+        {{ if .Diagnostics.TraefikLogs }}
+        <details class="log-box">
+          <summary>Traefik logs</summary>
+          <pre>{{ .Diagnostics.TraefikLogs }}</pre>
+        </details>
+        {{ end }}
+      </section>
+
       <section class="routes">
         {{ if .Routes }}
           <table>
@@ -105,19 +163,37 @@
                 <th>Domain</th>
                 <th>Target</th>
                 <th>TLS</th>
-                <th></th>
+                <th>Health</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {{ range .Routes }}
               <tr>
-                <td><a href="https://{{ .Domain }}" target="_blank" rel="noreferrer">{{ .Domain }}</a></td>
-                <td><code>{{ .TargetURL }}</code></td>
-                <td><span class="chip">{{ if .TLS }}HTTPS{{ else }}HTTP{{ end }}</span></td>
+                <td>
+                  <form id="route-{{ .Route.ID }}" method="post" action="/routes/{{ .Route.ID }}"></form>
+                  <input form="route-{{ .Route.ID }}" name="domain" type="text" value="{{ .Route.Domain }}" required>
+                  <a class="route-link" href="https://{{ .Route.Domain }}" target="_blank" rel="noreferrer">Open</a>
+                </td>
+                <td>
+                  <input form="route-{{ .Route.ID }}" name="target_url" type="url" value="{{ .Route.TargetURL }}" required>
+                </td>
+                <td>
+                  <label class="table-toggle">
+                    <input form="route-{{ .Route.ID }}" name="tls" type="checkbox" {{ if .Route.TLS }}checked{{ end }}>
+                    <span>{{ if .Route.TLS }}HTTPS{{ else }}HTTP{{ end }}</span>
+                  </label>
+                </td>
+                <td>
+                  <span class="health-chip {{ .Health.Class }}" title="{{ .Health.Detail }}">{{ .Health.Label }}</span>
+                </td>
                 <td class="actions">
-                  <form method="post" action="/routes/{{ .ID }}/delete">
-                    <button class="ghost" type="submit">Delete</button>
-                  </form>
+                  <div class="actions-inner">
+                    <button form="route-{{ .Route.ID }}" class="secondary-button" type="submit">Save</button>
+                    <form method="post" action="/routes/{{ .Route.ID }}/delete">
+                      <button class="ghost" type="submit">Delete</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
               {{ end }}
