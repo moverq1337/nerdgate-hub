@@ -250,7 +250,8 @@ main() {
   say "Starting containers..."
   (
     cd "$install_dir"
-    docker compose up -d --build
+    docker compose pull
+    docker compose up -d
   )
 
   say ""
@@ -261,4 +262,3 @@ main() {
 }
 
 main "$@"
-

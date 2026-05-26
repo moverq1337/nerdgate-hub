@@ -13,8 +13,6 @@ import (
 )
 
 type ServerConfig struct {
-	Username      string
-	Password      string
 	SessionSecret string
 	Store         *store.Store
 	Renderer      *traefik.Renderer
@@ -23,8 +21,6 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	username      string
-	password      string
 	sessionSecret []byte
 	store         *store.Store
 	renderer      *traefik.Renderer
@@ -44,9 +40,7 @@ type pageData struct {
 
 func NewServer(cfg ServerConfig) *Server {
 	return &Server{
-		username:      cfg.Username,
-		password:      cfg.Password,
-		sessionSecret: sessionSecret(cfg.Username, cfg.Password, cfg.SessionSecret),
+		sessionSecret: sessionSecret(cfg.SessionSecret),
 		store:         cfg.Store,
 		renderer:      cfg.Renderer,
 		docker:        cfg.Docker,

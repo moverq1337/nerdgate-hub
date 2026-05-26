@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -30,9 +29,21 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 
-	routeStore, err := store.Open(filepath.Join(cfg.DataDir, "routes.json"))
+	routeStore, err := store.Open(cfg.DataDir)
 	if err != nil {
 		logger.Error("open store", "error", err)
+		os.Exit(1)
+	}
+	defer routeStore.Close()
+
+	if err := routeStore.EnsureAdminUser(context.Background(), cfg.Username, cfg.Password); err != nil {
+		logger.Error("ensure admin user", "error", err)
+		os.Exit(1)
+	}
+
+	sessionSecret, err := routeStore.EnsureSessionSecret(context.Background(), cfg.SessionSecret)
+	if err != nil {
+		logger.Error("ensure session secret", "error", err)
 		os.Exit(1)
 	}
 
@@ -43,9 +54,7 @@ func main() {
 	}
 
 	app := web.NewServer(web.ServerConfig{
-		Username:      cfg.Username,
-		Password:      cfg.Password,
-		SessionSecret: cfg.SessionSecret,
+		SessionSecret: sessionSecret,
 		Store:         routeStore,
 		Renderer:      renderer,
 		Docker:        dockerclient.New(cfg.DockerSocketPath, cfg.DockerProxyNetwork),

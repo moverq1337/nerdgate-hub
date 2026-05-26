@@ -42,12 +42,19 @@ func (s *Server) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !constantTimeEqual(r.FormValue("username"), s.username) || !constantTimeEqual(r.FormValue("password"), s.password) {
+	username := strings.TrimSpace(r.FormValue("username"))
+	ok, err := s.store.Authenticate(r.Context(), username, r.FormValue("password"))
+	if err != nil {
+		s.logger.Error("authenticate user", "error", err)
+		http.Redirect(w, r, "/login?error="+url.QueryEscape("Login failed"), http.StatusSeeOther)
+		return
+	}
+	if !ok {
 		http.Redirect(w, r, "/login?error="+url.QueryEscape("Invalid login or password"), http.StatusSeeOther)
 		return
 	}
 
-	http.SetCookie(w, s.newSessionCookie())
+	http.SetCookie(w, s.newSessionCookie(username))
 	http.Redirect(w, r, safeNext(r.FormValue("next")), http.StatusSeeOther)
 }
 
@@ -80,12 +87,20 @@ func (s *Server) isAuthenticated(r *http.Request) bool {
 	}
 
 	user, pass, ok := r.BasicAuth()
-	return ok && constantTimeEqual(user, s.username) && constantTimeEqual(pass, s.password)
+	if !ok {
+		return false
+	}
+	authenticated, err := s.store.Authenticate(r.Context(), user, pass)
+	if err != nil {
+		s.logger.Warn("basic auth failed", "error", err)
+		return false
+	}
+	return authenticated
 }
 
-func (s *Server) newSessionCookie() *http.Cookie {
+func (s *Server) newSessionCookie(username string) *http.Cookie {
 	expires := time.Now().Add(30 * 24 * time.Hour)
-	payload := fmt.Sprintf("%s:%d", s.username, expires.Unix())
+	payload := fmt.Sprintf("%s:%d", username, expires.Unix())
 	return &http.Cookie{
 		Name:     "nerdgate_session",
 		Value:    encode(payload) + "." + s.sign(payload),
@@ -118,7 +133,7 @@ func (s *Server) validSession(r *http.Request) bool {
 	}
 
 	parts := strings.Split(string(payload), ":")
-	if len(parts) != 2 || parts[0] != s.username {
+	if len(parts) != 2 || parts[0] == "" {
 		return false
 	}
 
@@ -136,12 +151,8 @@ func (s *Server) sign(payload string) string {
 	return encodeBytes(mac.Sum(nil))
 }
 
-func sessionSecret(username, password, configured string) []byte {
-	seed := configured
-	if seed == "" {
-		seed = username + ":" + password
-	}
-	sum := sha256.Sum256([]byte(seed))
+func sessionSecret(value string) []byte {
+	sum := sha256.Sum256([]byte(value))
 	return sum[:]
 }
 
