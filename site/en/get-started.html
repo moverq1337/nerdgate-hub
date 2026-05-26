@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NerdGate Hub - Get Started</title>
+    <meta name="description" content="Install NerdGate Hub step by step.">
+    <link rel="icon" href="../logo.png">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./"><img src="../logo.png" alt="" aria-hidden="true">NerdGate Hub</a>
+      <nav aria-label="Main">
+        <a href="./">Idea</a>
+        <a href="get-started.html">Get Started</a>
+        <a href="operations.html">Operations</a>
+        <a href="../ru/get-started.html">RU</a>
+        <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="hero compact">
+        <p class="eyebrow">Get Started</p>
+        <h1>Install in one terminal session.</h1>
+        <p class="lead">Before installation, create a DNS record for the panel domain. The installer stops if DNS does not point to the server.</p>
+      </section>
+
+      <section class="section">
+        <h2>1. Prepare DNS</h2>
+        <p>Create an A record:</p>
+        <code>nerdgate.example.com -> SERVER_PUBLIC_IP</code>
+        <p>Ports <code>80</code> and <code>443</code> must be reachable from the internet for Let's Encrypt HTTP-01 validation.</p>
+      </section>
+
+      <section class="section">
+        <h2>2. Run installer</h2>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+          <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+        </div>
+        <p>The installer asks for install directory, panel domain, Let's Encrypt email, admin username, and password.</p>
+      </section>
+
+      <section class="section">
+        <h2>3. Open the panel</h2>
+        <code>https://nerdgate.example.com</code>
+        <p>Use the admin credentials from the installer.</p>
+      </section>
+
+      <section class="section">
+        <h2>4. Create your first route</h2>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Host port</h3>
+            <code>app.example.com -> http://host.docker.internal:3000</code>
+          </article>
+          <article class="card">
+            <h3>Remote server</h3>
+            <code>api.example.com -> http://203.0.113.10:8080</code>
+          </article>
+          <article class="card">
+            <h3>Docker network</h3>
+            <code>docker network connect nerdgate-proxy CONTAINER_NAME</code>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Local development</h2>
+        <code>docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</code>
+        <p>Production install pulls <code>ghcr.io/moverq1337/nerdgate-hub:latest</code>; local development can still build from source.</p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NerdGate Hub - Операции</title>
+    <meta name="description" content="Обслуживание NerdGate Hub.">
+    <link rel="icon" href="../logo.png">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./"><img src="../logo.png" alt="" aria-hidden="true">NerdGate Hub</a>
+      <nav aria-label="Main">
+        <a href="./">Идея</a>
+        <a href="get-started.html">Старт</a>
+        <a href="operations.html">Операции</a>
+        <a href="../en/operations.html">EN</a>
+        <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="hero compact">
+        <p class="eyebrow">Operations</p>
+        <h1>Обслуживание должно быть понятным.</h1>
+        <p class="lead">В MVP основные операции явные: сброс пароля, удаление, проверка DNS и обновление контейнеров.</p>
+      </section>
+
+      <section class="section">
+        <h2>Сброс пароля</h2>
+        <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
+        <p>Скрипт обновляет credentials в SQLite и ротирует session secret, поэтому старые сессии перестают работать.</p>
+      </section>
+
+      <section class="section">
+        <h2>Удаление</h2>
+        <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
+        <p>Скрипт останавливает Compose stack и может удалить папку установки вместе с данными.</p>
+      </section>
+
+      <section class="section">
+        <h2>Обновление</h2>
+        <div class="commands">
+          <code>cd /opt/nerdgate-hub</code>
+          <code>docker compose pull</code>
+          <code>docker compose up -d</code>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>DNS диагностика</h2>
+        <div class="commands">
+          <code>docker compose run --rm --no-deps nerdgate-hub check-domain nerdgate.example.com</code>
+          <code>docker compose run --rm --no-deps nerdgate-hub check-domain nerdgate.example.com 203.0.113.10</code>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

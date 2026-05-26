@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NerdGate Hub - Идея проекта</title>
+    <meta name="description" content="Идея и архитектура NerdGate Hub.">
+    <link rel="icon" href="../logo.png">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./"><img src="../logo.png" alt="" aria-hidden="true">NerdGate Hub</a>
+      <nav aria-label="Main">
+        <a href="./">Идея</a>
+        <a href="get-started.html">Старт</a>
+        <a href="operations.html">Операции</a>
+        <a href="../en/">EN</a>
+        <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Open-source edge panel</p>
+        <h1>Домены к контейнерам и портам без лишней платформы.</h1>
+        <p class="lead">NerdGate Hub - минимальная панель поверх Traefik. Ее задача простая: направить домен на Docker-контейнер, локальный порт или внешний HTTP-сервис.</p>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+          <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Зачем</p>
+        <h2>Зачем это нужно</h2>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Меньше лишнего</h3>
+            <p>NerdGate Hub не пытается стать большой платформой. Traefik принимает трафик, Docker запускает приложения, Hub управляет маршрутами.</p>
+          </article>
+          <article class="card">
+            <h3>Traefik-first</h3>
+            <p>Маршруты генерируются как dynamic config для Traefik. HTTPS и Let's Encrypt остаются внутри Traefik.</p>
+          </article>
+          <article class="card">
+            <h3>Понятная установка</h3>
+            <p>Инсталлер проверяет DNS до запуска, чтобы сертификат не ломался на первом старте.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Вместо Nginx Proxy Manager</p>
+        <h2>Почему не просто NPM?</h2>
+        <p>Nginx Proxy Manager полезен, но NerdGate Hub специально уже: Traefik-native, Docker-aware и без лишних настроек вокруг задачи <code>домен -> сервис</code>. Цель - меньше переключателей и более понятный workflow.</p>
+      </section>
+
+      <section class="section">
+        <p class="eyebrow">Архитектура</p>
+        <h2>Как работает</h2>
+        <ol class="steps">
+          <li>DNS домена панели указывает на сервер.</li>
+          <li>Traefik слушает порты 80 и 443.</li>
+          <li>NerdGate Hub хранит routes, users и settings в SQLite.</li>
+          <li>NerdGate Hub пишет dynamic config в <code>data/traefik/routes.yml</code>.</li>
+          <li>Traefik следит за файлом и применяет изменения автоматически.</li>
+        </ol>
+      </section>
+    </main>
+  </body>
+</html>

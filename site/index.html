@@ -3,80 +3,36 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>NerdGate Hub</title>
-    <meta name="description" content="A tiny open-source Traefik dashboard for routing domains to Docker containers, local ports, and remote servers.">
+    <title>NerdGate Hub Docs</title>
+    <meta name="description" content="NerdGate Hub documentation in English and Russian.">
+    <link rel="icon" href="logo.png">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="page">
-      <section class="hero">
-        <nav class="nav" aria-label="Language">
-          <strong>NerdGate Hub</strong>
-          <div>
-            <a href="#en">EN</a>
-            <a href="#ru">RU</a>
-            <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
-          </div>
-        </nav>
+    <header class="site-header">
+      <a class="brand" href="./"><img src="logo.png" alt="" aria-hidden="true">NerdGate Hub</a>
+      <nav aria-label="Language">
+        <a href="en/">English</a>
+        <a href="ru/">Русский</a>
+        <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
+      </nav>
+    </header>
 
-        <div class="hero-grid">
-          <div>
-            <p class="eyebrow">Open-source edge panel</p>
-            <h1>Domains to containers and ports without the extra platform.</h1>
-            <p class="lead">NerdGate Hub is a minimal Traefik-based dashboard for one-server routing: Docker containers, host ports, and remote IP targets.</p>
-            <div class="commands">
-              <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
-              <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
-            </div>
-          </div>
+    <main class="page hero">
+      <p class="eyebrow">Documentation</p>
+      <h1>Choose your language</h1>
+      <p class="lead">NerdGate Hub is a tiny open-source Traefik dashboard for routing domains to Docker containers, local ports, and remote HTTP services.</p>
 
-          <div class="terminal" aria-label="Product flow preview">
-            <span>DNS check: ok</span>
-            <span>Panel: nerdgate.example.com</span>
-            <span>Route: app.example.com -> container :3000</span>
-            <span>TLS: Let's Encrypt</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="en" class="section">
-        <p class="eyebrow">English</p>
-        <h2>What it does</h2>
-        <div class="grid">
-          <article>
-            <h3>Route domains</h3>
-            <p>Point a domain to a Docker container, a host port, or a remote HTTP service.</p>
-          </article>
-          <article>
-            <h3>Use Traefik</h3>
-            <p>Traefik handles HTTPS, Let's Encrypt, and reverse proxying. NerdGate Hub manages the dynamic config.</p>
-          </article>
-          <article>
-            <h3>Install safely</h3>
-            <p>The installer checks that the panel domain resolves to the current server before starting the stack.</p>
-          </article>
-        </div>
-      </section>
-
-      <section id="ru" class="section">
-        <p class="eyebrow">Русский</p>
-        <h2>Что делает проект</h2>
-        <div class="grid">
-          <article>
-            <h3>Прокидывает домены</h3>
-            <p>Домен можно направить на Docker-контейнер, локальный порт сервера или внешний HTTP-сервис по IP:port.</p>
-          </article>
-          <article>
-            <h3>Работает поверх Traefik</h3>
-            <p>Traefik принимает 80/443, выпускает сертификаты Let's Encrypt и проксирует трафик.</p>
-          </article>
-          <article>
-            <h3>Проверяет установку</h3>
-            <p>Инсталлер проверяет DNS домена панели до запуска, чтобы HTTPS не сломался на первом старте.</p>
-          </article>
-        </div>
-      </section>
+      <div class="card-grid two">
+        <a class="card link-card" href="en/">
+          <h2>English</h2>
+          <p>Project idea, installation, routing examples, and operations.</p>
+        </a>
+        <a class="card link-card" href="ru/">
+          <h2>Русский</h2>
+          <p>Идея проекта, установка, маршруты и обслуживание.</p>
+        </a>
+      </div>
     </main>
   </body>
 </html>
-

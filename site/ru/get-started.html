@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NerdGate Hub - Старт</title>
+    <meta name="description" content="Пошаговая установка NerdGate Hub.">
+    <link rel="icon" href="../logo.png">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="./"><img src="../logo.png" alt="" aria-hidden="true">NerdGate Hub</a>
+      <nav aria-label="Main">
+        <a href="./">Идея</a>
+        <a href="get-started.html">Старт</a>
+        <a href="operations.html">Операции</a>
+        <a href="../en/get-started.html">EN</a>
+        <a href="https://github.com/moverq1337/nerdgate-hub">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="hero compact">
+        <p class="eyebrow">Get Started</p>
+        <h1>Установка за одну терминальную сессию.</h1>
+        <p class="lead">Перед установкой создай DNS-запись для домена панели. Инсталлер остановится, если DNS не указывает на сервер.</p>
+      </section>
+
+      <section class="section">
+        <h2>1. Подготовь DNS</h2>
+        <p>Создай A-запись:</p>
+        <code>nerdgate.example.com -> SERVER_PUBLIC_IP</code>
+        <p>Порты <code>80</code> и <code>443</code> должны быть доступны из интернета для Let's Encrypt HTTP-01 validation.</p>
+      </section>
+
+      <section class="section">
+        <h2>2. Запусти инсталлер</h2>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+          <code>wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/install.sh | sh</code>
+        </div>
+        <p>Инсталлер спросит папку установки, домен панели, email для Let's Encrypt, admin username и password.</p>
+      </section>
+
+      <section class="section">
+        <h2>3. Открой панель</h2>
+        <code>https://nerdgate.example.com</code>
+        <p>Используй логин и пароль, которые указал при установке.</p>
+      </section>
+
+      <section class="section">
+        <h2>4. Создай первый route</h2>
+        <div class="card-grid">
+          <article class="card">
+            <h3>Порт хоста</h3>
+            <code>app.example.com -> http://host.docker.internal:3000</code>
+          </article>
+          <article class="card">
+            <h3>Другой сервер</h3>
+            <code>api.example.com -> http://203.0.113.10:8080</code>
+          </article>
+          <article class="card">
+            <h3>Docker network</h3>
+            <code>docker network connect nerdgate-proxy CONTAINER_NAME</code>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Локальная разработка</h2>
+        <code>docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build</code>
+        <p>Production-установка тянет <code>ghcr.io/moverq1337/nerdgate-hub:latest</code>, а dev-режим билдит из исходников.</p>
+      </section>
+    </main>
+  </body>
+</html>

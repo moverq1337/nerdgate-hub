@@ -22,6 +22,26 @@
   gap: 10px;
 }
 
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.brand-lockup img {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--muted);
@@ -85,4 +105,3 @@
   color: var(--muted);
   font-size: 14px;
 }
-
