@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NerdGate Hub</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">NerdGate Hub</p>
+          <h1>Domain Routes</h1>
+        </div>
+        <div class="status-pill">{{ len .Routes }} active</div>
+      </header>
+
+      {{ if .Status }}
+      <div class="notice success">Route {{ .Status }}.</div>
+      {{ end }}
+
+      {{ if .Error }}
+      <div class="notice error">{{ .Error }}</div>
+      {{ end }}
+
+      <section class="panel">
+        <form class="route-form" method="post" action="/routes">
+          <label>
+            Domain
+            <input name="domain" type="text" placeholder="app.example.com" autocomplete="off" required>
+          </label>
+
+          <label>
+            Target URL
+            <input name="target_url" type="url" placeholder="http://host.docker.internal:3000" required>
+          </label>
+
+          <label class="toggle">
+            <input name="tls" type="checkbox" checked>
+            <span>HTTPS</span>
+          </label>
+
+          <button type="submit">Add Route</button>
+        </form>
+      </section>
+
+      <section class="routes">
+        {{ if .Routes }}
+          <table>
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Target</th>
+                <th>TLS</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Routes }}
+              <tr>
+                <td><a href="https://{{ .Domain }}" target="_blank" rel="noreferrer">{{ .Domain }}</a></td>
+                <td><code>{{ .TargetURL }}</code></td>
+                <td>{{ if .TLS }}on{{ else }}off{{ end }}</td>
+                <td class="actions">
+                  <form method="post" action="/routes/{{ .ID }}/delete">
+                    <button class="ghost" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        {{ else }}
+          <div class="empty">No routes yet.</div>
+        {{ end }}
+      </section>
+    </main>
+  </body>
+</html>
+

@@ -1,0 +1,38 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    command:
+      - --api.dashboard=false
+      - --entryPoints.web.address=:80
+      - --entryPoints.web.http.redirections.entryPoint.to=websecure
+      - --entryPoints.web.http.redirections.entryPoint.scheme=https
+      - --entryPoints.websecure.address=:443
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --certificatesResolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data/traefik:/etc/traefik/dynamic:ro
+      - ./data/acme:/letsencrypt
+
+  nerdgate-hub:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NERDGATE_ADDR: ":8080"
+      NERDGATE_DATA_DIR: /data
+      NERDGATE_TRAEFIK_DYNAMIC_PATH: /traefik-dynamic/routes.yml
+      NERDGATE_USERNAME: "${NERDGATE_USERNAME}"
+      NERDGATE_PASSWORD: "${NERDGATE_PASSWORD}"
+    volumes:
+      - ./data/app:/data
+      - ./data/traefik:/traefik-dynamic

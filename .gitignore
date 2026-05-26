@@ -1,0 +1,8 @@
+.DS_Store
+bin/
+data/
+dist/
+tmp/
+*.md
+!README.md
+!readme.md
