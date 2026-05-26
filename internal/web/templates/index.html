@@ -5,15 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NerdGate Hub</title>
     <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
   </head>
   <body>
-    <main class="shell">
+    <main class="shell app-shell">
       <header class="topbar">
         <div>
           <p class="eyebrow">NerdGate Hub</p>
-          <h1>Domain Routes</h1>
+          <h1>Routes</h1>
+          <p class="lead">Domains, containers, ports. Nothing extra.</p>
         </div>
-        <div class="status-pill">{{ len .Routes }} active</div>
+        <div class="topbar-actions">
+          <div class="status-pill">{{ len .Routes }} active</div>
+          <form method="post" action="/logout">
+            <button class="secondary-button" type="submit">Log out</button>
+          </form>
+        </div>
       </header>
 
       {{ if .Status }}
@@ -24,16 +31,57 @@
       <div class="notice error">{{ .Error }}</div>
       {{ end }}
 
+      {{ if .DockerError }}
+      <div class="notice warning">{{ .DockerError }}</div>
+      {{ end }}
+
       <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>New Route</h2>
+            <p>Point a domain to a container or URL.</p>
+          </div>
+        </div>
+
         <form class="route-form" method="post" action="/routes">
-          <label>
+          <label class="field domain-field">
             Domain
             <input name="domain" type="text" placeholder="app.example.com" autocomplete="off" required>
           </label>
 
-          <label>
+          <fieldset class="target-mode">
+            <legend>Target</legend>
+            <label class="mode-option">
+              <input name="target_mode" type="radio" value="docker" {{ if gt .AvailableDockerTargets 0 }}checked{{ else }}disabled{{ end }}>
+              <span>Docker container</span>
+            </label>
+            <label class="mode-option">
+              <input name="target_mode" type="radio" value="manual" {{ if eq .AvailableDockerTargets 0 }}checked{{ end }}>
+              <span>Manual URL</span>
+            </label>
+          </fieldset>
+
+          <div class="field target-field" data-target-panel="docker">
+            <label>
+              Container port
+              <select name="docker_target" {{ if gt .AvailableDockerTargets 0 }}required{{ else }}disabled{{ end }}>
+                {{ if .DockerTargets }}
+                  {{ range .DockerTargets }}
+                  <option value="{{ .Value }}" {{ if not .Available }}disabled{{ end }}>{{ .Label }}</option>
+                  {{ end }}
+                {{ else }}
+                  <option value="">No published TCP ports found</option>
+                {{ end }}
+              </select>
+            </label>
+            {{ if not .DockerTargets }}
+            <p class="field-hint">Use a published port or attach the container to nerdgate-proxy.</p>
+            {{ end }}
+          </div>
+
+          <label class="field target-field" data-target-panel="manual">
             Target URL
-            <input name="target_url" type="url" placeholder="http://host.docker.internal:3000" required>
+            <input name="target_url" type="url" placeholder="http://host.docker.internal:3000" {{ if eq .AvailableDockerTargets 0 }}required{{ end }}>
           </label>
 
           <label class="toggle">
@@ -41,7 +89,7 @@
             <span>HTTPS</span>
           </label>
 
-          <button type="submit">Add Route</button>
+          <button type="submit">Create</button>
         </form>
       </section>
 
@@ -61,7 +109,7 @@
               <tr>
                 <td><a href="https://{{ .Domain }}" target="_blank" rel="noreferrer">{{ .Domain }}</a></td>
                 <td><code>{{ .TargetURL }}</code></td>
-                <td>{{ if .TLS }}on{{ else }}off{{ end }}</td>
+                <td><span class="chip">{{ if .TLS }}HTTPS{{ else }}HTTP{{ end }}</span></td>
                 <td class="actions">
                   <form method="post" action="/routes/{{ .ID }}/delete">
                     <button class="ghost" type="submit">Delete</button>
@@ -72,10 +120,12 @@
             </tbody>
           </table>
         {{ else }}
-          <div class="empty">No routes yet.</div>
+          <div class="empty">
+            <strong>No routes yet</strong>
+            <span>Add the first domain above.</span>
+          </div>
         {{ end }}
       </section>
     </main>
   </body>
 </html>
-

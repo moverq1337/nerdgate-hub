@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/nerdgatehub/nerdgate-hub/internal/config"
+	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
 	"github.com/nerdgatehub/nerdgate-hub/internal/traefik"
 	"github.com/nerdgatehub/nerdgate-hub/internal/web"
@@ -37,11 +38,13 @@ func main() {
 	}
 
 	app := web.NewServer(web.ServerConfig{
-		Username: cfg.Username,
-		Password: cfg.Password,
-		Store:    routeStore,
-		Renderer: renderer,
-		Logger:   logger,
+		Username:      cfg.Username,
+		Password:      cfg.Password,
+		SessionSecret: cfg.SessionSecret,
+		Store:         routeStore,
+		Renderer:      renderer,
+		Docker:        dockerclient.New(cfg.DockerSocketPath, cfg.DockerProxyNetwork),
+		Logger:        logger,
 	})
 
 	srv := &http.Server{

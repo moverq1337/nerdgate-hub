@@ -10,7 +10,7 @@ services:
       - --entryPoints.websecure.address=:443
       - --providers.file.directory=/etc/traefik/dynamic
       - --providers.file.watch=true
-      - --certificatesResolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesResolvers.letsencrypt.acme.email=${ACME_EMAIL:?Set ACME_EMAIL in .env}
       - --certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
       - --certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web
     ports:
@@ -21,6 +21,8 @@ services:
     volumes:
       - ./data/traefik:/etc/traefik/dynamic:ro
       - ./data/acme:/letsencrypt
+    networks:
+      - nerdgate-proxy
 
   nerdgate-hub:
     build: .
@@ -31,8 +33,18 @@ services:
       NERDGATE_ADDR: ":8080"
       NERDGATE_DATA_DIR: /data
       NERDGATE_TRAEFIK_DYNAMIC_PATH: /traefik-dynamic/routes.yml
-      NERDGATE_USERNAME: "${NERDGATE_USERNAME}"
-      NERDGATE_PASSWORD: "${NERDGATE_PASSWORD}"
+      NERDGATE_DOCKER_SOCKET: /var/run/docker.sock
+      NERDGATE_DOCKER_PROXY_NETWORK: nerdgate-proxy
+      NERDGATE_SESSION_SECRET: "${NERDGATE_SESSION_SECRET:?Set NERDGATE_SESSION_SECRET in .env}"
+      NERDGATE_USERNAME: "${NERDGATE_USERNAME:-admin}"
+      NERDGATE_PASSWORD: "${NERDGATE_PASSWORD:?Set NERDGATE_PASSWORD in .env}"
     volumes:
       - ./data/app:/data
       - ./data/traefik:/traefik-dynamic
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - nerdgate-proxy
+
+networks:
+  nerdgate-proxy:
+    name: nerdgate-proxy

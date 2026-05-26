@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in - NerdGate Hub</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body class="login-page">
+    <main class="login-shell">
+      <section class="login-card" aria-labelledby="login-title">
+        <p class="eyebrow">NerdGate Hub</p>
+        <h1 id="login-title">Sign in</h1>
+        <p class="lead">Your routes live behind one clean admin door.</p>
+
+        {{ if .Error }}
+        <div class="notice error">{{ .Error }}</div>
+        {{ end }}
+
+        <form class="login-form" method="post" action="/login">
+          <input name="next" type="hidden" value="{{ .Next }}">
+
+          <label>
+            Username
+            <input name="username" type="text" autocomplete="username" autofocus required>
+          </label>
+
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+
+          <button type="submit">Enter Hub</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
