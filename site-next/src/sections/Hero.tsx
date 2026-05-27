@@ -2,7 +2,6 @@ import { ArrowRight } from "lucide-react"
 import { GithubIcon } from "@/components/icons"
 import {
   HeroLiquidMetalRoot,
-  HeroLiquidMetalContainer,
   HeroLiquidMetalContent,
   HeroLiquidMetalHeading,
   HeroLiquidMetalDescription,
@@ -74,9 +73,9 @@ export function Hero() {
         </Badge>
       )}
     >
-      <div className="mx-auto w-full max-w-6xl px-4 pt-16 pb-10 sm:px-6 sm:pt-20 lg:pt-28">
-        <HeroLiquidMetalContainer className="grid gap-8 lg:grid-cols-[1fr_minmax(280px,440px)] lg:gap-16 lg:items-center pb-0">
-          <HeroLiquidMetalContent className="gap-6 text-center lg:text-left lg:gap-7">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-16 pb-10 sm:px-6 sm:pt-20 lg:pt-28">
+        <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-[1fr_minmax(280px,440px)] lg:gap-16 lg:items-center">
+          <HeroLiquidMetalContent className="min-w-0 gap-6 px-0 text-center sm:px-0 md:px-0 lg:gap-7 lg:px-0 lg:text-left">
             <Badge
               variant="outline"
               className="mx-auto w-fit rounded-full border-border bg-card/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground lg:mx-0"
@@ -169,7 +168,7 @@ export function Hero() {
               className="absolute top-[45%] left-[-22px]"
             />
           </div>
-        </HeroLiquidMetalContainer>
+        </div>
       </div>
 
       <HeroLiquidMetalMobileVisual className="-bottom-32 -z-10" />
