@@ -12,8 +12,17 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ github.ref_name }}
-        run: gh release create "$TAG_NAME" --generate-notes --verify-tag
+        run: |
+          if gh release view "$TAG_NAME" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh release edit "$TAG_NAME" --repo "$GH_REPO" --latest
+          else
+            gh release create "$TAG_NAME" --repo "$GH_REPO" --generate-notes --verify-tag --latest
+          fi
