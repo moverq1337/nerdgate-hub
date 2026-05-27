@@ -30,7 +30,12 @@
       <section class="section">
         <h2>Диагностика</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
-        <p>Панель тоже показывает target health, статус Traefik config, Docker API и свежие Traefik logs. Shell-скрипт показывает Compose status, DNS check и типовые варианты исправления ошибок сертификатов.</p>
+        <p>Без helper script можно открыть Diagnostics в панели и использовать встроенную DNS-команду при необходимости:</p>
+        <div class="commands">
+          <code>docker compose run --rm --no-deps nerdgate-hub check-domain nerdgate.example.com</code>
+          <code>docker compose logs --tail=160 traefik</code>
+        </div>
+        <p>Панель тоже показывает target health, статус Traefik config, Docker API и свежие Traefik logs. Shell-скрипт просто собирает host-level проверки в один интерактивный flow.</p>
       </section>
 
       <section class="section">
@@ -38,6 +43,14 @@
         <div class="commands">
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh</code>
+        </div>
+        <p>Те же действия можно запускать напрямую через бинарь NerdGate Hub внутри Compose:</p>
+        <div class="commands">
+          <code>mkdir -p backups</code>
+          <code>docker compose run --rm --no-deps -v "$PWD/backups:/backup" nerdgate-hub backup /data /acme/acme.json /backup/nerdgate.zip</code>
+          <code>docker compose down --remove-orphans</code>
+          <code>docker compose run --rm --no-deps -v "$PWD/backups/nerdgate.zip:/backup.zip:ro" nerdgate-hub restore /data /acme/acme.json /backup.zip</code>
+          <code>docker compose up -d</code>
         </div>
         <p>Backup содержит SQLite-данные, optional legacy routes и Let's Encrypt <code>acme.json</code>. Restore останавливает Compose stack, заменяет данные и запускает stack обратно.</p>
       </section>
@@ -59,13 +72,17 @@
       <section class="section">
         <h2>Сброс пароля</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
+        <p>Прямая команда без helper script:</p>
+        <code>docker compose run --rm --no-deps nerdgate-hub reset-password /data admin 'new-password'</code>
         <p>Скрипт обновляет credentials в SQLite и ротирует session secret, поэтому старые сессии перестают работать.</p>
       </section>
 
       <section class="section">
         <h2>Удаление</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
-        <p>Скрипт останавливает Compose stack и может удалить папку установки вместе с данными.</p>
+        <p>Прямая команда без helper script:</p>
+        <code>docker compose down --remove-orphans</code>
+        <p>Скрипт останавливает Compose stack и может удалить папку установки вместе с данными. Прямая команда только останавливает контейнеры и оставляет файлы на диске.</p>
       </section>
 
       <section class="section">
