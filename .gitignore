@@ -6,3 +6,5 @@ tmp/
 *.md
 !README.md
 !readme.md
+!docs/
+!docs/README.ru.md
