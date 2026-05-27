@@ -6,6 +6,7 @@
     <title>First setup - NerdGate Hub</title>
     <link rel="icon" href="/static/logo.png">
     <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
   </head>
   <body class="login-page">
     <main class="login-shell">
@@ -17,11 +18,19 @@
         <h1 id="setup-title">First setup</h1>
         <p class="lead">Paste the setup token from the installer, then create the first admin account.</p>
 
+        <ol class="onboarding-steps" aria-label="Setup steps">
+          <li><span>1</span>DNS checked by installer</li>
+          <li><span>2</span>Setup token issued</li>
+          <li><span>3</span>Admin account created here</li>
+        </ol>
+
         {{ if .Error }}
         <div class="notice error">{{ .Error }}</div>
         {{ end }}
 
         <form class="login-form" method="post" action="/setup">
+          <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+
           <label>
             Setup token
             <input name="setup_token" type="password" autocomplete="one-time-code" autofocus required>
@@ -42,7 +51,7 @@
             <input name="confirm_password" type="password" autocomplete="new-password" required>
           </label>
 
-          <button type="submit">Create admin</button>
+          <button type="submit" data-loading-label="Creating...">Create admin</button>
         </form>
       </section>
     </main>

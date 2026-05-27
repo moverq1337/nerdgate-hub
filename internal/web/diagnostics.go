@@ -7,21 +7,27 @@ import (
 	"strings"
 
 	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
+	"github.com/nerdgatehub/nerdgate-hub/internal/store"
 )
 
 type DiagnosticsData struct {
 	ConfigPath   string
 	ConfigStatus string
+	BackupPath   string
+	RestoreHint  string
 	DockerStatus string
 	HealthStatus string
 	TraefikLogs  string
+	AuditEvents  []store.AuditEvent
 	Hints        []string
 }
 
 func (s *Server) diagnostics(ctx context.Context, routes []RouteView, containers []dockerclient.Container, dockerErr error) DiagnosticsData {
 	data := DiagnosticsData{
-		ConfigPath: s.renderer.Path(),
-		Hints:      make([]string, 0),
+		ConfigPath:  s.renderer.Path(),
+		BackupPath:  "/backup",
+		RestoreHint: "Use scripts/restore.sh on the host to restore a backup safely.",
+		Hints:       make([]string, 0),
 	}
 
 	if info, err := os.Stat(data.ConfigPath); err != nil {
@@ -61,6 +67,11 @@ func (s *Server) diagnostics(ctx context.Context, routes []RouteView, containers
 
 	if len(data.Hints) == 0 {
 		data.Hints = append(data.Hints, "No known certificate or routing problem detected from the current checks.")
+	}
+	if events, err := s.store.ListAuditEvents(ctx, 12); err == nil {
+		data.AuditEvents = events
+	} else {
+		s.logger.Warn("list audit events failed", "error", err)
 	}
 
 	return data

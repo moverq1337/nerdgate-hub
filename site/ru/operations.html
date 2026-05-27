@@ -24,13 +24,27 @@
       <section class="hero compact">
         <p class="eyebrow">Operations</p>
         <h1>Обслуживание должно быть понятным.</h1>
-        <p class="lead">В MVP основные операции явные: диагностика, сброс пароля, удаление, проверка DNS и обновление контейнеров.</p>
+        <p class="lead">В MVP основные операции явные: диагностика, backup, restore, сброс пароля, удаление, проверка DNS и обновление контейнеров.</p>
       </section>
 
       <section class="section">
         <h2>Диагностика</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
         <p>Панель тоже показывает target health, статус Traefik config, Docker API и свежие Traefik logs. Shell-скрипт показывает Compose status, DNS check и типовые варианты исправления ошибок сертификатов.</p>
+      </section>
+
+      <section class="section">
+        <h2>Backup и restore</h2>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh</code>
+        </div>
+        <p>Backup содержит SQLite-данные, optional legacy routes и Let's Encrypt <code>acme.json</code>. Restore останавливает Compose stack, заменяет данные и запускает stack обратно.</p>
+      </section>
+
+      <section class="section">
+        <h2>Security hardening</h2>
+        <p>Панель использует CSRF-токены на POST-формах, rate limit для login и first setup, более строгие session cookies, security headers браузера и audit log важных действий.</p>
       </section>
 
       <section class="section">

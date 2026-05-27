@@ -24,13 +24,27 @@
       <section class="hero compact">
         <p class="eyebrow">Operations</p>
         <h1>Keep the install understandable.</h1>
-        <p class="lead">The current MVP keeps operational tasks explicit: diagnostics, reset password, uninstall, check DNS, and update containers.</p>
+        <p class="lead">The current MVP keeps operational tasks explicit: diagnostics, backup, restore, reset password, uninstall, check DNS, and update containers.</p>
       </section>
 
       <section class="section">
         <h2>Diagnostics</h2>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
         <p>The panel also shows target health, Traefik config status, Docker API status, and recent Traefik logs. The shell script prints Compose status, DNS check output, and common fixes for certificate issuance failures.</p>
+      </section>
+
+      <section class="section">
+        <h2>Backup and restore</h2>
+        <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh</code>
+        </div>
+        <p>Backups include SQLite data, optional legacy routes, and Let's Encrypt <code>acme.json</code>. Restore stops the Compose stack before replacing data, then starts it again.</p>
+      </section>
+
+      <section class="section">
+        <h2>Security hardening</h2>
+        <p>The panel uses CSRF tokens on POST forms, rate limits login and first setup, sends stricter session cookies, adds browser security headers, and records important actions in the audit log.</p>
       </section>
 
       <section class="section">

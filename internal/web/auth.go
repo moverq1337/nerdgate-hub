@@ -14,12 +14,14 @@ import (
 )
 
 type loginPageData struct {
-	Error string
-	Next  string
+	Error     string
+	Next      string
+	CSRFToken string
 }
 
 type setupPageData struct {
-	Error string
+	Error     string
+	CSRFToken string
 }
 
 func (s *Server) setup(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +37,8 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := setupPageData{
-		Error: r.URL.Query().Get("error"),
+		Error:     r.URL.Query().Get("error"),
+		CSRFToken: s.csrfToken(w, r),
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -46,6 +49,16 @@ func (s *Server) setup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) setupPost(w http.ResponseWriter, r *http.Request) {
+	key := "setup:" + clientIP(r)
+	if !s.rateLimiter.Allow(key) {
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape("Too many attempts. Try again later."), http.StatusSeeOther)
+		return
+	}
+	if !s.validCSRF(r) {
+		http.Redirect(w, r, "/setup?error="+url.QueryEscape("Security token expired. Reload the page and try again."), http.StatusSeeOther)
+		return
+	}
+
 	hasUsers, err := s.store.HasUsers(r.Context())
 	if err != nil {
 		s.logger.Error("check setup state", "error", err)
@@ -71,9 +84,12 @@ func (s *Server) setupPost(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.store.CompleteSetup(r.Context(), r.FormValue("setup_token"), username, password); err != nil {
 		s.logger.Warn("setup failed", "error", err)
+		s.audit(r.Context(), "setup.failed", clientIP(r), err.Error())
 		http.Redirect(w, r, "/setup?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
 		return
 	}
+	s.rateLimiter.Reset(key)
+	s.audit(r.Context(), "setup.complete", username, clientIP(r))
 
 	if secret, err := s.store.Setting(r.Context(), "session_secret"); err == nil && secret != "" {
 		s.setSessionSecret(secret)
@@ -81,7 +97,7 @@ func (s *Server) setupPost(w http.ResponseWriter, r *http.Request) {
 		s.logger.Warn("setup completed but session secret refresh failed", "error", err)
 	}
 
-	http.SetCookie(w, s.newSessionCookie(username))
+	http.SetCookie(w, s.newSessionCookie(r, username))
 	http.Redirect(w, r, "/?status=setup-complete", http.StatusSeeOther)
 }
 
@@ -103,8 +119,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := loginPageData{
-		Error: r.URL.Query().Get("error"),
-		Next:  safeNext(r.URL.Query().Get("next")),
+		Error:     r.URL.Query().Get("error"),
+		Next:      safeNext(r.URL.Query().Get("next")),
+		CSRFToken: s.csrfToken(w, r),
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -115,6 +132,16 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) loginPost(w http.ResponseWriter, r *http.Request) {
+	key := "login:" + clientIP(r)
+	if !s.rateLimiter.Allow(key) {
+		http.Redirect(w, r, "/login?error="+url.QueryEscape("Too many attempts. Try again later."), http.StatusSeeOther)
+		return
+	}
+	if !s.validCSRF(r) {
+		http.Redirect(w, r, "/login?error="+url.QueryEscape("Security token expired. Reload the page and try again."), http.StatusSeeOther)
+		return
+	}
+
 	hasUsers, err := s.store.HasUsers(r.Context())
 	if err != nil {
 		s.logger.Error("check setup state", "error", err)
@@ -135,26 +162,36 @@ func (s *Server) loginPost(w http.ResponseWriter, r *http.Request) {
 	ok, err := s.store.Authenticate(r.Context(), username, r.FormValue("password"))
 	if err != nil {
 		s.logger.Error("authenticate user", "error", err)
+		s.audit(r.Context(), "login.error", username, err.Error())
 		http.Redirect(w, r, "/login?error="+url.QueryEscape("Login failed"), http.StatusSeeOther)
 		return
 	}
 	if !ok {
+		s.audit(r.Context(), "login.failed", username, clientIP(r))
 		http.Redirect(w, r, "/login?error="+url.QueryEscape("Invalid login or password"), http.StatusSeeOther)
 		return
 	}
 
-	http.SetCookie(w, s.newSessionCookie(username))
+	s.rateLimiter.Reset(key)
+	s.audit(r.Context(), "login.success", username, clientIP(r))
+	http.SetCookie(w, s.newSessionCookie(r, username))
 	http.Redirect(w, r, safeNext(r.FormValue("next")), http.StatusSeeOther)
 }
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		http.Redirect(w, r, "/?error="+url.QueryEscape("Security token expired. Reload the page and try again."), http.StatusSeeOther)
+		return
+	}
+	s.audit(r.Context(), "logout", currentActor(r), clientIP(r))
 	http.SetCookie(w, &http.Cookie{
 		Name:     "nerdgate_session",
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   requestIsSecure(r),
+		SameSite: http.SameSiteStrictMode,
 	})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -198,7 +235,7 @@ func (s *Server) isAuthenticated(r *http.Request) bool {
 	return authenticated
 }
 
-func (s *Server) newSessionCookie(username string) *http.Cookie {
+func (s *Server) newSessionCookie(r *http.Request, username string) *http.Cookie {
 	expires := time.Now().Add(30 * 24 * time.Hour)
 	payload := fmt.Sprintf("%s:%d", username, expires.Unix())
 	return &http.Cookie{
@@ -208,7 +245,8 @@ func (s *Server) newSessionCookie(username string) *http.Cookie {
 		Expires:  expires,
 		MaxAge:   int((30 * 24 * time.Hour).Seconds()),
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   requestIsSecure(r),
+		SameSite: http.SameSiteStrictMode,
 	}
 }
 
@@ -243,6 +281,29 @@ func (s *Server) validSession(r *http.Request) bool {
 	}
 
 	return time.Now().Unix() < expires
+}
+
+func currentActor(r *http.Request) string {
+	if user, _, ok := r.BasicAuth(); ok && strings.TrimSpace(user) != "" {
+		return strings.TrimSpace(user)
+	}
+	cookie, err := r.Cookie("nerdgate_session")
+	if err != nil {
+		return ""
+	}
+	encodedPayload, _, ok := strings.Cut(cookie.Value, ".")
+	if !ok {
+		return ""
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(encodedPayload)
+	if err != nil {
+		return ""
+	}
+	username, _, ok := strings.Cut(string(payload), ":")
+	if !ok {
+		return ""
+	}
+	return username
 }
 
 func (s *Server) sign(payload string) string {

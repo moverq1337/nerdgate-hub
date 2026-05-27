@@ -158,6 +158,30 @@ func TestCompleteSetupRequiresValidToken(t *testing.T) {
 	}
 }
 
+func TestAuditEvents(t *testing.T) {
+	ctx := context.Background()
+	s, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.AddAuditEvent(ctx, "route.create", "admin", "app.example.com"); err != nil {
+		t.Fatal(err)
+	}
+
+	events, err := s.ListAuditEvents(ctx, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected 1 audit event, got %d", len(events))
+	}
+	if events[0].Action != "route.create" || events[0].Actor != "admin" {
+		t.Fatalf("unexpected event: %#v", events[0])
+	}
+}
+
 func TestStoreImportsRoutesJSON(t *testing.T) {
 	dir := t.TempDir()
 	data := `[

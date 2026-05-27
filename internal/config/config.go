@@ -6,6 +6,7 @@ type Config struct {
 	Addr               string
 	DataDir            string
 	TraefikDynamicPath string
+	AcmePath           string
 	DockerSocketPath   string
 	DockerProxyNetwork string
 	SessionSecret      string
@@ -19,6 +20,7 @@ func FromEnv() Config {
 		Addr:               env("NERDGATE_ADDR", ":8080"),
 		DataDir:            env("NERDGATE_DATA_DIR", "./data/app"),
 		TraefikDynamicPath: env("NERDGATE_TRAEFIK_DYNAMIC_PATH", "./data/traefik/routes.yml"),
+		AcmePath:           env("NERDGATE_ACME_PATH", "./data/acme/acme.json"),
 		DockerSocketPath:   env("NERDGATE_DOCKER_SOCKET", "/var/run/docker.sock"),
 		DockerProxyNetwork: env("NERDGATE_DOCKER_PROXY_NETWORK", "nerdgate-proxy"),
 		SessionSecret:      env("NERDGATE_SESSION_SECRET", ""),

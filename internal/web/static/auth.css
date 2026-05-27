@@ -17,6 +17,39 @@
   font-size: 42px;
 }
 
+.onboarding-steps {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onboarding-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #ffffff, #f1f1ee);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.onboarding-steps span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--text);
+  color: #ffffff;
+  font-size: 12px;
+}
+
 .login-form {
   display: grid;
   gap: 14px;
@@ -27,4 +60,3 @@
   width: 100%;
   margin-top: 4px;
 }
-

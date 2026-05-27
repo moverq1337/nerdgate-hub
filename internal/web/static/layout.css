@@ -136,7 +136,7 @@
 }
 
 .diagnostics-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .diagnostic-item {
@@ -150,6 +150,16 @@
 
 .diagnostic-item strong {
   font-size: 14px;
+}
+
+.diagnostic-item small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.backup-item {
+  border-color: var(--line-strong);
 }
 
 .hint-list {
@@ -185,4 +195,32 @@
   font-size: 12px;
   line-height: 1.45;
   white-space: pre-wrap;
+}
+
+.audit-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.audit-item {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.5fr) minmax(90px, 0.35fr) minmax(180px, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+}
+
+.audit-item span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.audit-item code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -69,13 +69,14 @@
       </section>
 
       <section class="section">
-        <h2>5. Диагностика, сброс пароля или uninstall</h2>
+        <h2>5. Backup, диагностика, reset или uninstall</h2>
         <div class="commands">
+          <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/uninstall.sh | sh</code>
         </div>
-        <p>Diagnostics-скрипт покажет Traefik logs и типовые причины проблем с сертификатами. Reset-скрипт обновляет admin credentials в SQLite. Uninstall-скрипт останавливает stack и может удалить папку установки.</p>
+        <p>Backup-скрипт сохраняет SQLite-данные и сертификаты. Diagnostics покажет Traefik logs и типовые причины проблем с сертификатами. Reset обновляет admin credentials в SQLite. Uninstall останавливает stack и может удалить папку установки.</p>
       </section>
 
       <section class="section">

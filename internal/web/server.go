@@ -6,11 +6,14 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/nerdgatehub/nerdgate-hub/internal/backup"
 	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
 	"github.com/nerdgatehub/nerdgate-hub/internal/traefik"
@@ -18,6 +21,8 @@ import (
 
 type ServerConfig struct {
 	SessionSecret string
+	DataDir       string
+	AcmePath      string
 	Store         *store.Store
 	Renderer      *traefik.Renderer
 	Docker        *dockerclient.Client
@@ -27,11 +32,14 @@ type ServerConfig struct {
 type Server struct {
 	sessionMu     sync.RWMutex
 	sessionSecret []byte
+	dataDir       string
+	acmePath      string
 	store         *store.Store
 	renderer      *traefik.Renderer
 	docker        *dockerclient.Client
 	logger        *slog.Logger
 	tmpl          *template.Template
+	rateLimiter   *RateLimiter
 }
 
 type pageData struct {
@@ -40,6 +48,7 @@ type pageData struct {
 	AttachableTargets      []dockerclient.TargetOption
 	AvailableDockerTargets int
 	Diagnostics            DiagnosticsData
+	CSRFToken              string
 	DockerError            string
 	StatusMessage          string
 	Error                  string
@@ -50,11 +59,14 @@ var domainSplitPattern = regexp.MustCompile(`[,\s]+`)
 func NewServer(cfg ServerConfig) *Server {
 	return &Server{
 		sessionSecret: sessionSecret(cfg.SessionSecret),
+		dataDir:       cfg.DataDir,
+		acmePath:      cfg.AcmePath,
 		store:         cfg.Store,
 		renderer:      cfg.Renderer,
 		docker:        cfg.Docker,
 		logger:        cfg.Logger,
 		tmpl:          template.Must(template.ParseFS(templates, "templates/*.html")),
+		rateLimiter:   NewRateLimiter(8, 10*time.Minute),
 	}
 }
 
@@ -68,15 +80,47 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /login", s.loginPost)
 	mux.HandleFunc("POST /logout", s.withAuth(s.logout))
 	mux.HandleFunc("GET /", s.withAuth(s.index))
+	mux.HandleFunc("GET /backup", s.withAuth(s.downloadBackup))
 	mux.HandleFunc("POST /routes", s.withAuth(s.createRoute))
 	mux.HandleFunc("POST /routes/{id}", s.withAuth(s.updateRoute))
 	mux.HandleFunc("POST /routes/{id}/delete", s.withAuth(s.deleteRoute))
 	mux.HandleFunc("POST /containers/{id}/attach", s.withAuth(s.attachContainer))
-	return mux
+	return securityHeaders(mux)
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) downloadBackup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	tmpDir, err := os.MkdirTemp("", "nerdgate-backup-download-*")
+	if err != nil {
+		http.Error(w, "backup failed", http.StatusInternalServerError)
+		return
+	}
+	defer os.RemoveAll(tmpDir)
+
+	name := "nerdgate-backup-" + time.Now().UTC().Format("20060102-150405") + ".zip"
+	path := filepath.Join(tmpDir, name)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	if err := backup.Create(ctx, s.dataDir, s.acmePath, path); err != nil {
+		s.logger.Error("create backup", "error", err)
+		http.Error(w, "backup failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.audit(r.Context(), "backup.download", currentActor(r), name)
+
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
+	http.ServeFile(w, r, path)
 }
 
 func (s *Server) index(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +135,7 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		AttachableTargets:      attachableTargets(dockerTargets),
 		AvailableDockerTargets: availableTargetCount(dockerTargets),
 		Diagnostics:            s.diagnostics(r.Context(), routeViews, containers, dockerErr),
+		CSRFToken:              s.csrfToken(w, r),
 		StatusMessage:          statusMessage(r.URL.Query().Get("status")),
 		Error:                  r.URL.Query().Get("error"),
 	}
@@ -107,6 +152,10 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		s.redirectError(w, r, "security token expired; reload the page and try again")
+		return
+	}
 	if err := r.ParseForm(); err != nil {
 		s.redirectError(w, r, "invalid form")
 		return
@@ -131,6 +180,7 @@ func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
 		s.redirectError(w, r, err.Error())
 		return
 	}
+	s.audit(r.Context(), "route.create", currentActor(r), strings.Join(domains, ", "))
 
 	if err := s.renderer.Render(s.store.List()); err != nil {
 		s.logger.Error("render traefik config", "error", err)
@@ -142,6 +192,10 @@ func (s *Server) createRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) updateRoute(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		s.redirectError(w, r, "security token expired; reload the page and try again")
+		return
+	}
 	if err := r.ParseForm(); err != nil {
 		s.redirectError(w, r, "invalid form")
 		return
@@ -157,6 +211,7 @@ func (s *Server) updateRoute(w http.ResponseWriter, r *http.Request) {
 		s.redirectError(w, r, err.Error())
 		return
 	}
+	s.audit(r.Context(), "route.update", currentActor(r), input.Domain)
 
 	if err := s.renderer.Render(s.store.List()); err != nil {
 		s.logger.Error("render traefik config", "error", err)
@@ -168,11 +223,16 @@ func (s *Server) updateRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deleteRoute(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		s.redirectError(w, r, "security token expired; reload the page and try again")
+		return
+	}
 	id := r.PathValue("id")
 	if err := s.store.Delete(id); err != nil {
 		s.redirectError(w, r, err.Error())
 		return
 	}
+	s.audit(r.Context(), "route.delete", currentActor(r), id)
 
 	if err := s.renderer.Render(s.store.List()); err != nil {
 		s.logger.Error("render traefik config", "error", err)
@@ -184,6 +244,10 @@ func (s *Server) deleteRoute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) attachContainer(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		s.redirectError(w, r, "security token expired; reload the page and try again")
+		return
+	}
 	if s.docker == nil {
 		s.redirectError(w, r, "Docker API is unavailable")
 		return
@@ -197,8 +261,15 @@ func (s *Server) attachContainer(w http.ResponseWriter, r *http.Request) {
 		s.redirectError(w, r, err.Error())
 		return
 	}
+	s.audit(r.Context(), "container.attach", currentActor(r), r.PathValue("id"))
 
 	http.Redirect(w, r, "/?status=attached", http.StatusSeeOther)
+}
+
+func (s *Server) audit(ctx context.Context, action, actor, detail string) {
+	if err := s.store.AddAuditEvent(ctx, action, actor, detail); err != nil {
+		s.logger.Warn("audit event failed", "action", action, "error", err)
+	}
 }
 
 func (s *Server) dockerContainers(r *http.Request) ([]dockerclient.Container, error) {

@@ -75,6 +75,8 @@ func main() {
 
 	app := web.NewServer(web.ServerConfig{
 		SessionSecret: sessionSecret,
+		DataDir:       cfg.DataDir,
+		AcmePath:      cfg.AcmePath,
 		Store:         routeStore,
 		Renderer:      renderer,
 		Docker:        dockerclient.New(cfg.DockerSocketPath, cfg.DockerProxyNetwork),

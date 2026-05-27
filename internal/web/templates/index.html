@@ -22,7 +22,8 @@
         <div class="topbar-actions">
           <div class="status-pill">{{ len .Routes }} active</div>
           <form method="post" action="/logout">
-            <button class="secondary-button" type="submit">Log out</button>
+            <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+            <button class="secondary-button" type="submit" data-loading-label="Leaving...">Log out</button>
           </form>
         </div>
       </header>
@@ -47,54 +48,64 @@
           </div>
         </div>
 
-        <form class="route-form" method="post" action="/routes">
-          <label class="field domain-field">
-            Domains
-            <textarea name="domains" placeholder="app.example.com&#10;api.example.com" autocomplete="off" required></textarea>
-            <span class="field-hint">Use commas, spaces, or new lines for multiple domains.</span>
-          </label>
+        <form class="route-form" method="post" action="/routes" novalidate>
+          <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
 
-          <fieldset class="target-mode">
-            <legend>Target</legend>
-            <label class="mode-option">
-              <input name="target_mode" type="radio" value="docker" {{ if gt .AvailableDockerTargets 0 }}checked{{ else }}disabled{{ end }}>
-              <span>Docker container</span>
+          <div class="route-builder-row">
+            <label class="field domain-field">
+              Domains
+              <textarea name="domains" placeholder="app.example.com&#10;api.example.com" autocomplete="off" spellcheck="false"></textarea>
+              <span class="field-hint">Use commas, spaces, or new lines for multiple domains.</span>
             </label>
-            <label class="mode-option">
-              <input name="target_mode" type="radio" value="manual" {{ if eq .AvailableDockerTargets 0 }}checked{{ end }}>
-              <span>Manual URL</span>
-            </label>
-          </fieldset>
 
-          <div class="field target-field" data-target-panel="docker">
-            <label>
-              Container port
-              <select name="docker_target" {{ if gt .AvailableDockerTargets 0 }}required{{ else }}disabled{{ end }}>
-                {{ if .DockerTargets }}
-                  {{ range .DockerTargets }}
-                  <option value="{{ .Value }}" {{ if not .Available }}disabled{{ end }}>{{ .Label }}</option>
-                  {{ end }}
-                {{ else }}
-                  <option value="">No published TCP ports found</option>
+            <div class="route-target-group">
+              <div class="target-topline">
+                <fieldset class="target-mode">
+                  <legend>Target</legend>
+                  <label class="mode-option">
+                    <input name="target_mode" type="radio" value="docker" {{ if gt .AvailableDockerTargets 0 }}checked{{ else }}disabled{{ end }}>
+                    <span>Docker container</span>
+                  </label>
+                  <label class="mode-option">
+                    <input name="target_mode" type="radio" value="manual" {{ if eq .AvailableDockerTargets 0 }}checked{{ end }}>
+                    <span>Manual URL</span>
+                  </label>
+                </fieldset>
+
+                <label class="toggle">
+                  <input name="tls" type="checkbox" checked>
+                  <span>HTTPS</span>
+                </label>
+              </div>
+
+              <div class="field target-field" data-target-panel="docker">
+                <label>
+                  Container port
+                  <select name="docker_target" {{ if gt .AvailableDockerTargets 0 }}required{{ else }}disabled{{ end }}>
+                    {{ if .DockerTargets }}
+                      {{ range .DockerTargets }}
+                      <option value="{{ .Value }}" {{ if not .Available }}disabled{{ end }}>{{ .Label }}</option>
+                      {{ end }}
+                    {{ else }}
+                      <option value="">No published TCP ports found</option>
+                    {{ end }}
+                  </select>
+                </label>
+                {{ if not .DockerTargets }}
+                <p class="field-hint">Use a published port or attach the container to nerdgate-proxy.</p>
                 {{ end }}
-              </select>
-            </label>
-            {{ if not .DockerTargets }}
-            <p class="field-hint">Use a published port or attach the container to nerdgate-proxy.</p>
-            {{ end }}
+              </div>
+
+              <label class="field target-field" data-target-panel="manual">
+                Target URL
+                <input name="target_url" type="url" placeholder="http://203.0.113.10:8080" {{ if eq .AvailableDockerTargets 0 }}required{{ end }}>
+              </label>
+            </div>
           </div>
 
-          <label class="field target-field" data-target-panel="manual">
-            Target URL
-            <input name="target_url" type="url" placeholder="http://203.0.113.10:8080" {{ if eq .AvailableDockerTargets 0 }}required{{ end }}>
-          </label>
-
-          <label class="toggle">
-            <input name="tls" type="checkbox" checked>
-            <span>HTTPS</span>
-          </label>
-
-          <button type="submit">Create</button>
+          <div class="route-submit-row">
+            <button type="submit" data-loading-label="Creating...">Create</button>
+          </div>
         </form>
       </section>
 
@@ -109,11 +120,12 @@
         <div class="attach-list">
           {{ range .AttachableTargets }}
           <form class="attach-item" method="post" action="/containers/{{ .ContainerID }}/attach">
+            <input name="_csrf" type="hidden" value="{{ $.CSRFToken }}">
             <div>
               <strong>{{ .ContainerName }}</strong>
               <span>{{ .PrivatePort }}/tcp needs network access</span>
             </div>
-            <button class="secondary-button" type="submit">Attach</button>
+            <button class="secondary-button" type="submit" data-loading-label="Attaching...">Attach</button>
           </form>
           {{ end }}
         </div>
@@ -141,6 +153,12 @@
             <span>Targets</span>
             <strong>{{ .Diagnostics.HealthStatus }}</strong>
           </div>
+          <div class="diagnostic-item backup-item">
+            <span>Backup</span>
+            <strong>SQLite + routes + certificates</strong>
+            <a class="secondary-button button-link" href="{{ .Diagnostics.BackupPath }}">Download backup</a>
+            <small>{{ .Diagnostics.RestoreHint }}</small>
+          </div>
         </div>
         <div class="hint-list">
           {{ range .Diagnostics.Hints }}
@@ -151,6 +169,20 @@
         <details class="log-box">
           <summary>Traefik logs</summary>
           <pre>{{ .Diagnostics.TraefikLogs }}</pre>
+        </details>
+        {{ end }}
+        {{ if .Diagnostics.AuditEvents }}
+        <details class="log-box">
+          <summary>Audit log</summary>
+          <div class="audit-list">
+            {{ range .Diagnostics.AuditEvents }}
+            <div class="audit-item">
+              <strong>{{ .Action }}</strong>
+              <span>{{ .Actor }}</span>
+              <code>{{ .Detail }}</code>
+            </div>
+            {{ end }}
+          </div>
         </details>
         {{ end }}
       </section>
@@ -172,6 +204,7 @@
               <tr>
                 <td>
                   <form id="route-{{ .Route.ID }}" method="post" action="/routes/{{ .Route.ID }}"></form>
+                  <input form="route-{{ .Route.ID }}" name="_csrf" type="hidden" value="{{ $.CSRFToken }}">
                   <input form="route-{{ .Route.ID }}" name="domain" type="text" value="{{ .Route.Domain }}" required>
                   <a class="route-link" href="https://{{ .Route.Domain }}" target="_blank" rel="noreferrer">Open</a>
                 </td>
@@ -189,9 +222,10 @@
                 </td>
                 <td class="actions">
                   <div class="actions-inner">
-                    <button form="route-{{ .Route.ID }}" class="secondary-button" type="submit">Save</button>
-                    <form method="post" action="/routes/{{ .Route.ID }}/delete">
-                      <button class="ghost" type="submit">Delete</button>
+                    <button form="route-{{ .Route.ID }}" class="secondary-button" type="submit" data-loading-label="Saving...">Save</button>
+                    <form method="post" action="/routes/{{ .Route.ID }}/delete" data-confirm="Delete this route? This cannot be undone.">
+                      <input name="_csrf" type="hidden" value="{{ $.CSRFToken }}">
+                      <button class="ghost" type="submit" data-loading-label="Deleting...">Delete</button>
                     </form>
                   </div>
                 </td>

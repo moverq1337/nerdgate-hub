@@ -82,13 +82,22 @@
             <h3>Health и attach</h3>
             <p>Смотри health targets, diagnostics и подключай контейнеры к nerdgate-proxy.</p>
           </article>
+          <article class="card">
+            <h3>Hardened admin</h3>
+            <p>CSRF-токены, rate limit для login/setup, строгие cookies, browser security headers и audit log уже встроены.</p>
+          </article>
         </div>
       </section>
 
       <section class="section">
         <p class="eyebrow">Обслуживание</p>
-        <h2>Сброс пароля, диагностика и uninstall есть из коробки.</h2>
+        <h2>Backup, сброс пароля, диагностика и uninstall есть из коробки.</h2>
         <div class="card-grid">
+          <article class="card">
+            <h3>Backup</h3>
+            <p>Сохраняет SQLite-данные, legacy routes если есть, и Let's Encrypt acme.json.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
+          </article>
           <article class="card">
             <h3>Сброс пароля</h3>
             <p>Обновляет credentials в SQLite и ротирует session secret.</p>
@@ -114,6 +123,7 @@
           <li>DNS домена панели указывает на сервер.</li>
           <li>Traefik слушает порты 80 и 443.</li>
           <li>NerdGate Hub хранит routes, users и settings в SQLite.</li>
+          <li>Admin POST-действия используют CSRF-токены, а важные изменения пишутся в audit log.</li>
           <li>NerdGate Hub пишет dynamic config в <code>data/traefik/routes.yml</code>.</li>
           <li>Traefik следит за файлом и применяет изменения автоматически.</li>
         </ol>

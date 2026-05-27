@@ -6,6 +6,7 @@
     <title>Sign in - NerdGate Hub</title>
     <link rel="icon" href="/static/logo.png">
     <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
   </head>
   <body class="login-page">
     <main class="login-shell">
@@ -23,6 +24,7 @@
 
         <form class="login-form" method="post" action="/login">
           <input name="next" type="hidden" value="{{ .Next }}">
+          <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
 
           <label>
             Username
@@ -34,7 +36,7 @@
             <input name="password" type="password" autocomplete="current-password" required>
           </label>
 
-          <button type="submit">Enter Hub</button>
+          <button type="submit" data-loading-label="Checking...">Enter Hub</button>
         </form>
       </section>
     </main>

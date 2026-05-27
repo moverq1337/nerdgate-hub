@@ -82,13 +82,22 @@
             <h3>Health and attach</h3>
             <p>See target health, read diagnostics, and attach containers to nerdgate-proxy.</p>
           </article>
+          <article class="card">
+            <h3>Hardened admin</h3>
+            <p>CSRF tokens, login/setup rate limits, strict cookies, browser security headers, and audit log are built in.</p>
+          </article>
         </div>
       </section>
 
       <section class="section">
         <p class="eyebrow">Maintenance</p>
-        <h2>Password reset, diagnostics, and uninstall are built in.</h2>
+        <h2>Backup, password reset, diagnostics, and uninstall are built in.</h2>
         <div class="card-grid">
+          <article class="card">
+            <h3>Backup</h3>
+            <p>Saves SQLite data, legacy routes when present, and Let's Encrypt acme.json.</p>
+            <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
+          </article>
           <article class="card">
             <h3>Reset password</h3>
             <p>Updates SQLite credentials and rotates the session secret.</p>
@@ -114,6 +123,7 @@
           <li>DNS points your panel domain to the server.</li>
           <li>Traefik listens on ports 80 and 443.</li>
           <li>NerdGate Hub stores routes, users, and settings in SQLite.</li>
+          <li>Admin POST actions use CSRF tokens and important changes are written to the audit log.</li>
           <li>NerdGate Hub writes Traefik dynamic config to <code>data/traefik/routes.yml</code>.</li>
           <li>Traefik watches that file and applies changes automatically.</li>
         </ol>

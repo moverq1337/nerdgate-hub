@@ -52,6 +52,8 @@ Traefik still owns the hard traffic work: ports `80/443`, HTTPS, Let's Encrypt, 
 - Attach containers to `nerdgate-proxy` from the panel.
 - Remote targets: `http://203.0.113.10:8080`.
 - Target health checks and in-panel diagnostics.
+- CSRF protection, rate limiting for login/setup, strict cookies, security headers, and audit log.
+- Backup and restore for SQLite data plus Let's Encrypt `acme.json`.
 - Password reset, shell diagnostics, and uninstall scripts.
 - Tagged GitHub releases like `v0.1.0`.
 - Static bilingual docs site for GitHub Pages.
@@ -98,6 +100,18 @@ Diagnose HTTPS, Traefik, DNS, and certificate problems:
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh
 ```
 
+Create a backup:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh
+```
+
+Restore from a backup:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh
+```
+
 Update:
 
 ```sh
@@ -142,6 +156,8 @@ data/traefik/routes.yml    Traefik dynamic config
 data/acme/acme.json        Let's Encrypt certificates
 ```
 
+Backup archives include `nerdgate.db`, optional legacy `routes.json`, optional `acme.json`, and backup metadata.
+
 ### GitHub Pages
 
 If the Pages workflow fails with `Get Pages site failed`, enable Pages once:
@@ -179,6 +195,8 @@ Traefik занимается трафиком: `80/443`, HTTPS, Let's Encrypt и
 - Подключение контейнера к `nerdgate-proxy` из панели.
 - Маршруты на другой сервер: `http://203.0.113.10:8080`.
 - Health checks для targets и diagnostics прямо в панели.
+- CSRF protection, rate limit для login/setup, строгие cookies, security headers и audit log.
+- Backup и restore SQLite-данных вместе с Let's Encrypt `acme.json`.
 - Скрипты сброса пароля, shell-диагностики и удаления.
 - Tagged GitHub releases вроде `v0.1.0`.
 - Двуязычная документация на GitHub Pages.
@@ -225,6 +243,18 @@ curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/script
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/diagnose.sh | sh
 ```
 
+Создать backup:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh
+```
+
+Восстановиться из backup:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh
+```
+
 Обновить:
 
 ```sh
@@ -268,6 +298,8 @@ data/app/nerdgate.db       SQLite: users, settings, routes
 data/traefik/routes.yml    Traefik dynamic config
 data/acme/acme.json        Let's Encrypt certificates
 ```
+
+Backup-архив содержит `nerdgate.db`, optional legacy `routes.json`, optional `acme.json` и metadata.
 
 ### Roadmap
 

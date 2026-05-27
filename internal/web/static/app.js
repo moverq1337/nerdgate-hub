@@ -19,5 +19,25 @@ document.addEventListener("DOMContentLoaded", () => {
     input.addEventListener("change", syncTargetPanels);
   });
   syncTargetPanels();
-});
 
+  document.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      const message = form.dataset.confirm;
+      if (message && !window.confirm(message)) {
+        event.preventDefault();
+        return;
+      }
+
+      const submitter = event.submitter || form.querySelector('button[type="submit"]');
+      if (!submitter) {
+        return;
+      }
+
+      const loadingLabel = submitter.dataset.loadingLabel || "Working...";
+      submitter.dataset.originalLabel = submitter.textContent;
+      submitter.textContent = loadingLabel;
+      submitter.setAttribute("aria-busy", "true");
+      submitter.disabled = true;
+    });
+  });
+});

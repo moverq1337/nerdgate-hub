@@ -35,6 +35,14 @@ type RouteInput struct {
 	TLS       bool
 }
 
+type AuditEvent struct {
+	ID        string
+	Action    string
+	Actor     string
+	Detail    string
+	CreatedAt time.Time
+}
+
 type Store struct {
 	db *sql.DB
 }
@@ -428,6 +436,47 @@ func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 	return err
 }
 
+func (s *Store) AddAuditEvent(ctx context.Context, action, actor, detail string) error {
+	action = strings.TrimSpace(action)
+	if action == "" {
+		return errors.New("audit action is required")
+	}
+
+	now := time.Now().UTC()
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO audit_events (id, action, actor, detail, created_at)
+		VALUES (?, ?, ?, ?, ?)
+	`, newID(now), action, strings.TrimSpace(actor), strings.TrimSpace(detail), now)
+	return err
+}
+
+func (s *Store) ListAuditEvents(ctx context.Context, limit int) ([]AuditEvent, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, action, actor, detail, created_at
+		FROM audit_events
+		ORDER BY created_at DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := make([]AuditEvent, 0, limit)
+	for rows.Next() {
+		var event AuditEvent
+		if err := rows.Scan(&event.ID, &event.Action, &event.Actor, &event.Detail, &event.CreatedAt); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	return events, rows.Err()
+}
+
 func (s *Store) migrate() error {
 	_, err := s.db.Exec(`
 		PRAGMA journal_mode = WAL;
@@ -454,6 +503,17 @@ func (s *Store) migrate() error {
 			value TEXT NOT NULL,
 			updated_at TIMESTAMP NOT NULL
 		);
+
+		CREATE TABLE IF NOT EXISTS audit_events (
+			id TEXT PRIMARY KEY,
+			action TEXT NOT NULL,
+			actor TEXT NOT NULL DEFAULT '',
+			detail TEXT NOT NULL DEFAULT '',
+			created_at TIMESTAMP NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS audit_events_created_at_idx
+			ON audit_events (created_at DESC);
 	`)
 	return err
 }

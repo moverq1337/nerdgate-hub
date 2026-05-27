@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/nerdgatehub/nerdgate-hub/internal/backup"
 	"github.com/nerdgatehub/nerdgate-hub/internal/preflight"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
 )
@@ -18,10 +19,43 @@ func runCommand(name string, args []string) {
 		runCheckDomain(args)
 	case "reset-password":
 		runResetPassword(args)
+	case "backup":
+		runBackup(args)
+	case "restore":
+		runRestore(args)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", name)
 		os.Exit(2)
 	}
+}
+
+func runBackup(args []string) {
+	if len(args) != 3 {
+		fmt.Fprintln(os.Stderr, "usage: nerdgate-hub backup DATA_DIR ACME_PATH OUTPUT_ZIP")
+		os.Exit(2)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := backup.Create(ctx, args[0], args[1], args[2]); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create backup: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("backup written to %s\n", args[2])
+}
+
+func runRestore(args []string) {
+	if len(args) != 3 {
+		fmt.Fprintln(os.Stderr, "usage: nerdgate-hub restore DATA_DIR ACME_PATH INPUT_ZIP")
+		os.Exit(2)
+	}
+
+	if err := backup.Restore(args[0], args[1], args[2]); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to restore backup: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("backup restored from %s\n", args[2])
 }
 
 func runCheckDomain(args []string) {
