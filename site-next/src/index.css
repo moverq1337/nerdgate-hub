@@ -69,6 +69,11 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
   html {
     color-scheme: dark;
     scroll-behavior: smooth;
@@ -76,6 +81,13 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    width: 100%;
+    max-width: 100vw;
+  }
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 }
 

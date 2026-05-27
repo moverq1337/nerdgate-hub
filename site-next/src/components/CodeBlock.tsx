@@ -24,25 +24,25 @@ export function CodeBlock({ code, label, className }: CodeBlockProps) {
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl border border-border bg-card/70 px-4 py-3 ring-glow",
+        "group relative flex w-full max-w-full items-center gap-3 overflow-hidden rounded-xl border border-border bg-card/70 px-4 py-3 ring-glow",
         className,
       )}
     >
       {label ? (
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/80">
+        <span className="shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground/80">
           {label}
         </span>
       ) : (
-        <span className="text-muted-foreground/60 select-none">$</span>
+        <span className="shrink-0 text-muted-foreground/60 select-none">$</span>
       )}
-      <code className="flex-1 truncate font-mono text-xs text-foreground sm:text-sm">
+      <code className="block min-w-0 flex-1 overflow-hidden truncate font-mono text-xs text-foreground sm:text-sm">
         {code}
       </code>
       <button
         type="button"
         onClick={copy}
         aria-label="Copy to clipboard"
-        className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+        className="shrink-0 rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-emerald-400" />
