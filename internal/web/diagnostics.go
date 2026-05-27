@@ -47,7 +47,7 @@ func (s *Server) diagnostics(ctx context.Context, routes []RouteView, containers
 	up, down := healthCounts(routes)
 	data.HealthStatus = fmt.Sprintf("%d up, %d down", up, down)
 	if down > 0 {
-		data.Hints = append(data.Hints, "One or more targets are down. Check the target URL, container network, firewall, or backend service.")
+		data.Hints = append(data.Hints, "One or more targets are down. Open the health chip for details, then check the target URL, Docker network, firewall, and backend logs.")
 	}
 
 	if dockerErr == nil {
@@ -112,7 +112,7 @@ func traefikHints(logs string) []string {
 	if strings.Contains(lower, "unable to obtain acme certificate") ||
 		strings.Contains(lower, "error getting certificate") ||
 		strings.Contains(lower, "acme: error") {
-		hints = append(hints, "Let's Encrypt could not issue a certificate. Check DNS and public access to ports 80/443.")
+		hints = append(hints, "Let's Encrypt could not issue a certificate. Run check-domain for the domain and verify public TCP 80/443 reach Traefik.")
 	}
 	if strings.Contains(lower, "connection refused") ||
 		strings.Contains(lower, "timeout") ||

@@ -44,7 +44,8 @@ Traefik занимается трафиком: `80/443`, HTTPS, Let's Encrypt и
 - Маршруты на другой сервер: `http://203.0.113.10:8080`.
 - Health checks для targets и diagnostics прямо в панели.
 - CSRF protection, rate limit для login/setup, строгие cookies, security headers и audit log.
-- Backup и restore SQLite-данных вместе с Let's Encrypt `acme.json`.
+- Смена admin password прямо в панели.
+- Backup download и staged restore SQLite-данных вместе с Let's Encrypt `acme.json`.
 - Скрипты сброса пароля, shell-диагностики и удаления.
 - Tagged GitHub releases вроде `v0.1.0`.
 - Двуязычная документация на GitHub Pages.
@@ -75,6 +76,8 @@ wget -qO- https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts
 
 Сбросить admin password:
 
+Используй `Maintenance -> Account password` в панели или helper:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh
 ```
@@ -93,11 +96,15 @@ curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/script
 
 Создать backup:
 
+Используй `Diagnostics -> Download backup` в панели или команду:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh
 ```
 
 Восстановиться из backup:
+
+Используй `Maintenance -> Restore backup` в панели. Панель проверит zip, поставит restore в pending и перезапустит NerdGate Hub, чтобы restore применился до открытия SQLite. Helper тоже остается:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh

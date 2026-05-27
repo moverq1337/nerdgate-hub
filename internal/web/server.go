@@ -81,6 +81,8 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /logout", s.withAuth(s.logout))
 	mux.HandleFunc("GET /", s.withAuth(s.index))
 	mux.HandleFunc("GET /backup", s.withAuth(s.downloadBackup))
+	mux.HandleFunc("POST /restore", s.withAuth(s.stageRestore))
+	mux.HandleFunc("POST /account/password", s.withAuth(s.changePassword))
 	mux.HandleFunc("POST /routes", s.withAuth(s.createRoute))
 	mux.HandleFunc("POST /routes/{id}", s.withAuth(s.updateRoute))
 	mux.HandleFunc("POST /routes/{id}/delete", s.withAuth(s.deleteRoute))
@@ -288,11 +290,32 @@ func routeTargetURL(r *http.Request) string {
 }
 
 func (s *Server) redirectError(w http.ResponseWriter, r *http.Request, message string) {
-	message = strings.TrimSpace(message)
+	message = friendlyUserError(message)
 	if message == "" {
 		message = "request failed"
 	}
 	http.Redirect(w, r, "/?error="+url.QueryEscape(message), http.StatusSeeOther)
+}
+
+func friendlyUserError(message string) string {
+	message = strings.TrimSpace(message)
+	lower := strings.ToLower(message)
+	switch {
+	case strings.Contains(lower, "security token"):
+		return "Security token expired. Reload the page and try again."
+	case strings.Contains(lower, "domain must be a valid hostname"):
+		return "Domain must be a hostname like app.example.com. Do not include http://, paths, or ports."
+	case strings.Contains(lower, "target url must start"):
+		return "Target URL must start with http:// or https://."
+	case strings.Contains(lower, "target url must include"):
+		return "Target URL must include a host, for example http://203.0.113.10:8080."
+	case strings.Contains(lower, "already exists"):
+		return message
+	case strings.Contains(lower, "docker api"):
+		return "Docker API is unavailable. Check that /var/run/docker.sock is mounted into NerdGate Hub."
+	default:
+		return message
+	}
 }
 
 func availableTargetCount(options []dockerclient.TargetOption) int {
@@ -349,6 +372,10 @@ func statusMessage(status string) string {
 		return "Container attached to nerdgate-proxy. Internal targets are available now."
 	case "setup-complete":
 		return "Setup complete. Welcome to NerdGate Hub."
+	case "password-updated":
+		return "Password updated. Existing sessions were rotated."
+	case "restore-staged":
+		return "Backup accepted. NerdGate Hub is restarting to apply the restore."
 	default:
 		return ""
 	}

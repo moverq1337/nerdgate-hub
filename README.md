@@ -53,7 +53,8 @@ Traefik still owns the hard traffic work: ports `80/443`, HTTPS, Let's Encrypt, 
 - Remote targets: `http://203.0.113.10:8080`.
 - Target health checks and in-panel diagnostics.
 - CSRF protection, rate limiting for login/setup, strict cookies, security headers, and audit log.
-- Backup and restore for SQLite data plus Let's Encrypt `acme.json`.
+- Account password change in the panel.
+- Backup download and staged restore for SQLite data plus Let's Encrypt `acme.json`.
 - Password reset, shell diagnostics, and uninstall scripts.
 - Tagged GitHub releases like `v0.1.0`.
 - Static bilingual docs site for GitHub Pages.
@@ -84,6 +85,8 @@ The installer asks for the panel domain and Let's Encrypt email, checks DNS, cre
 
 Reset admin password:
 
+Use `Maintenance -> Account password` in the panel, or run the helper:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh
 ```
@@ -102,11 +105,15 @@ curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/script
 
 Create a backup:
 
+Use `Diagnostics -> Download backup` in the panel, or run:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh
 ```
 
 Restore from a backup:
+
+Use `Maintenance -> Restore backup` in the panel. The panel validates the zip, stages the restore, and restarts NerdGate Hub so the restore is applied before SQLite opens. The helper script is still available:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh

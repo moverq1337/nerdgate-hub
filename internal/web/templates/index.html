@@ -132,6 +132,55 @@
       </section>
       {{ end }}
 
+      <section class="panel maintenance-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Maintenance</h2>
+            <p>Account and restore actions that should stay close to the admin panel.</p>
+          </div>
+        </div>
+
+        <div class="maintenance-grid">
+          <form class="maintenance-card" method="post" action="/account/password">
+            <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+            <div>
+              <h3>Account password</h3>
+              <p>Change the admin password and rotate active sessions.</p>
+            </div>
+            <label>
+              Current password
+              <input name="current_password" type="password" autocomplete="current-password" required>
+            </label>
+            <label>
+              New password
+              <input name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+            </label>
+            <label>
+              Confirm new password
+              <input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+            </label>
+            <button type="submit" data-loading-label="Updating...">Update password</button>
+          </form>
+
+          <form class="maintenance-card danger-zone" method="post" action="/restore" enctype="multipart/form-data" data-confirm="Restore this backup and restart NerdGate Hub? Current routes, users, sessions, and certificates may be replaced.">
+            <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+            <div>
+              <h3>Restore backup</h3>
+              <p>Upload a NerdGate backup zip. The app stages it, restarts, then applies it before SQLite opens.</p>
+            </div>
+            <label>
+              Backup zip
+              <input name="backup" type="file" accept=".zip,application/zip" required>
+            </label>
+            <label class="confirm-line">
+              <input name="confirm_restore" type="checkbox" required>
+              <span>I understand NerdGate Hub will restart and current data may be replaced.</span>
+            </label>
+            <button class="ghost" type="submit" data-loading-label="Staging restore...">Stage restore</button>
+          </form>
+        </div>
+      </section>
+
       <section class="panel diagnostics-panel">
         <div class="panel-head">
           <div>

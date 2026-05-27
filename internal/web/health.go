@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -70,7 +71,7 @@ func checkTarget(parent context.Context, targetURL string) HealthStatus {
 	return HealthStatus{
 		State:  "down",
 		Label:  "Down",
-		Detail: err.Error(),
+		Detail: friendlyTargetError(err),
 		Class:  "down",
 	}
 }
@@ -101,8 +102,27 @@ func healthFromStatus(status int) HealthStatus {
 		return HealthStatus{
 			State:  "down",
 			Label:  "Down",
-			Detail: fmt.Sprintf("HTTP %d", status),
+			Detail: fmt.Sprintf("Target returned HTTP %d. Check the backend logs and target URL.", status),
 			Class:  "down",
 		}
+	}
+}
+
+func friendlyTargetError(err error) string {
+	if err == nil {
+		return "Target did not respond."
+	}
+	value := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(value, "connection refused"):
+		return "Connection refused. The service is not listening on that host/port, or the container is not attached to nerdgate-proxy."
+	case strings.Contains(value, "no such host"):
+		return "Host was not found. Check the container name, DNS name, or target URL."
+	case strings.Contains(value, "i/o timeout"), strings.Contains(value, "context deadline exceeded"):
+		return "Target timed out. Check firewall rules, Docker network access, and whether the backend is running."
+	case strings.Contains(value, "certificate"):
+		return "Target TLS failed. Use http:// for internal backends unless the backend has a valid certificate."
+	default:
+		return err.Error()
 	}
 }

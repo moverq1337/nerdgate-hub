@@ -95,12 +95,12 @@
         <div class="card-grid">
           <article class="card">
             <h3>Backup</h3>
-            <p>Сохраняет SQLite-данные, legacy routes если есть, и Let's Encrypt acme.json.</p>
+            <p>Сохраняет SQLite-данные, legacy routes если есть, и Let's Encrypt acme.json. Restore upload ставится из панели и применяется после restart.</p>
             <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
           </article>
           <article class="card">
             <h3>Сброс пароля</h3>
-            <p>Обновляет credentials в SQLite и ротирует session secret.</p>
+            <p>Меняй пароль в Maintenance или используй helper, если потерял доступ.</p>
             <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
           </article>
           <article class="card">

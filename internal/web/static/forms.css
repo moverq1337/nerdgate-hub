@@ -121,6 +121,7 @@ label {
 input[type="text"],
 input[type="url"],
 input[type="password"],
+input[type="file"],
 textarea,
 select {
   width: 100%;
@@ -135,6 +136,7 @@ select {
 input[type="text"]:hover,
 input[type="url"]:hover,
 input[type="password"]:hover,
+input[type="file"]:hover,
 textarea:hover,
 select:hover {
   border-color: #a9a9a3;
@@ -143,6 +145,7 @@ select:hover {
 input[type="text"]:focus,
 input[type="url"]:focus,
 input[type="password"]:focus,
+input[type="file"]:focus,
 textarea:focus,
 select:focus {
   border-color: var(--line-strong);
@@ -287,5 +290,20 @@ select {
 .table-toggle input {
   width: 16px;
   height: 16px;
+  accent-color: var(--text);
+}
+
+.confirm-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.confirm-line input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
   accent-color: var(--text);
 }

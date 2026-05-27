@@ -20,6 +20,15 @@ type Metadata struct {
 	Version   string `json:"version"`
 }
 
+type Info struct {
+	HasDatabase bool
+	HasRoutes   bool
+	HasACME     bool
+	HasMetadata bool
+}
+
+const pendingRestoreName = "restore-pending.zip"
+
 func Create(ctx context.Context, dataDir, acmePath, outputPath string) error {
 	dataDir = filepath.Clean(dataDir)
 	if outputPath == "" {
@@ -82,7 +91,37 @@ func Create(ctx context.Context, dataDir, acmePath, outputPath string) error {
 	return archive.Close()
 }
 
+func Inspect(inputPath string) (Info, error) {
+	reader, err := zip.OpenReader(inputPath)
+	if err != nil {
+		return Info{}, err
+	}
+	defer reader.Close()
+
+	var info Info
+	for _, file := range reader.File {
+		switch file.Name {
+		case "nerdgate.db":
+			info.HasDatabase = true
+		case "routes.json":
+			info.HasRoutes = true
+		case "acme.json":
+			info.HasACME = true
+		case "metadata.json":
+			info.HasMetadata = true
+		}
+	}
+	if !info.HasDatabase {
+		return info, fmt.Errorf("backup does not contain nerdgate.db")
+	}
+	return info, nil
+}
+
 func Restore(dataDir, acmePath, inputPath string) error {
+	if _, err := Inspect(inputPath); err != nil {
+		return err
+	}
+
 	reader, err := zip.OpenReader(inputPath)
 	if err != nil {
 		return err
@@ -125,6 +164,47 @@ func Restore(dataDir, acmePath, inputPath string) error {
 	}
 
 	return nil
+}
+
+func PendingRestorePath(dataDir string) string {
+	return filepath.Join(filepath.Clean(dataDir), pendingRestoreName)
+}
+
+func StageRestore(dataDir, inputPath string) (Info, error) {
+	info, err := Inspect(inputPath)
+	if err != nil {
+		return info, err
+	}
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+		return info, err
+	}
+
+	outputPath := PendingRestorePath(dataDir)
+	tmpPath := outputPath + ".tmp"
+	if err := copyFile(inputPath, tmpPath, 0o600); err != nil {
+		return info, err
+	}
+	if err := os.Rename(tmpPath, outputPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return info, err
+	}
+	return info, nil
+}
+
+func ApplyPendingRestore(dataDir, acmePath string) (bool, error) {
+	path := PendingRestorePath(dataDir)
+	if !exists(path) {
+		return false, nil
+	}
+	if err := Restore(dataDir, acmePath, path); err != nil {
+		failedPath := path + ".failed-" + time.Now().UTC().Format("20060102-150405")
+		_ = os.Rename(path, failedPath)
+		return true, err
+	}
+	if err := os.Remove(path); err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 func snapshotSQLite(ctx context.Context, dbPath, outputPath string) error {
@@ -179,6 +259,23 @@ func extractFile(file *zip.File, outputPath string, mode os.FileMode) error {
 	defer output.Close()
 
 	_, err = io.Copy(output, reader)
+	return err
+}
+
+func copyFile(inputPath, outputPath string, mode os.FileMode) error {
+	input, err := os.Open(inputPath)
+	if err != nil {
+		return err
+	}
+	defer input.Close()
+
+	output, err := os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
+
+	_, err = io.Copy(output, input)
 	return err
 }
 

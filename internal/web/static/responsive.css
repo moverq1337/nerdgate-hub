@@ -11,7 +11,8 @@
     grid-template-columns: 1fr;
   }
 
-  .diagnostics-grid {
+  .diagnostics-grid,
+  .maintenance-grid {
     grid-template-columns: 1fr;
   }
 

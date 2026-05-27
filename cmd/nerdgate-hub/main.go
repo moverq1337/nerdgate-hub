@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nerdgatehub/nerdgate-hub/internal/backup"
 	"github.com/nerdgatehub/nerdgate-hub/internal/config"
 	"github.com/nerdgatehub/nerdgate-hub/internal/dockerclient"
 	"github.com/nerdgatehub/nerdgate-hub/internal/store"
@@ -28,6 +29,13 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+
+	if applied, err := backup.ApplyPendingRestore(cfg.DataDir, cfg.AcmePath); err != nil {
+		logger.Error("apply pending restore", "error", err)
+		os.Exit(1)
+	} else if applied {
+		logger.Info("pending restore applied")
+	}
 
 	routeStore, err := store.Open(cfg.DataDir)
 	if err != nil {

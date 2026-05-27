@@ -40,6 +40,7 @@
 
       <section class="section">
         <h2>Backup и restore</h2>
+        <p>В панели используй <code>Diagnostics -> Download backup</code> и <code>Maintenance -> Restore backup</code>. Restore upload проверяет zip, ставит его в pending, перезапускает NerdGate Hub и применяет restore до открытия SQLite.</p>
         <div class="commands">
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/backup.sh | sh</code>
           <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/restore.sh | sh</code>
@@ -71,6 +72,7 @@
 
       <section class="section">
         <h2>Сброс пароля</h2>
+        <p>Если доступ к панели еще есть, используй <code>Maintenance -> Account password</code>.</p>
         <code>curl -fsSL https://raw.githubusercontent.com/moverq1337/nerdgate-hub/main/scripts/reset-password.sh | sh</code>
         <p>Прямая команда без helper script:</p>
         <code>docker compose run --rm --no-deps nerdgate-hub reset-password /data admin 'new-password'</code>
