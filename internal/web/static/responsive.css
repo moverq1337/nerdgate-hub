@@ -1,10 +1,12 @@
 @media (max-width: 920px) {
   h1 {
-    font-size: 34px;
+    font-size: 30px;
   }
 
   .topbar {
+    align-items: flex-start;
     flex-direction: column;
+    gap: 18px;
   }
 
   .route-builder-row {
@@ -44,7 +46,7 @@
 @media (max-width: 560px) {
   .shell {
     width: min(100vw - 24px, 1160px);
-    padding: 18px 0;
+    padding: 24px 0 60px;
   }
 
   .topbar-actions {
@@ -59,6 +61,6 @@
 
   .panel,
   .login-card {
-    padding: 16px;
+    padding: 18px;
   }
 }

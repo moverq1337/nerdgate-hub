@@ -3,6 +3,9 @@ bin/
 data/
 dist/
 tmp/
+node_modules/
+*.log
+*.tsbuildinfo
 *.md
 !README.md
 !readme.md

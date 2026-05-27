@@ -10,13 +10,13 @@
   </head>
   <body class="login-page">
     <main class="login-shell">
-      <section class="login-card" aria-labelledby="login-title">
-        <div class="brand-lockup">
+      <section class="login-card auth-card" aria-labelledby="login-title">
+        <div class="auth-mark">
           <img src="/static/logo.png" alt="" aria-hidden="true">
-          <span>NerdGate Hub</span>
         </div>
-        <h1 id="login-title">Sign in</h1>
-        <p class="lead">Your routes live behind one clean admin door.</p>
+        <p class="auth-brand">NERDGATE HUB</p>
+        <h1 id="login-title" class="auth-title">Sign in</h1>
+        <p class="lead auth-lead">Your routes live behind one clean admin door.</p>
 
         {{ if .Error }}
         <div class="notice error">{{ .Error }}</div>

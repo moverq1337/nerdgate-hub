@@ -20,6 +20,16 @@
   }
 }
 
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -28,4 +38,3 @@
     animation-duration: 1ms !important;
   }
 }
-

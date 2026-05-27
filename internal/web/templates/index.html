@@ -132,108 +132,120 @@
       </section>
       {{ end }}
 
-      <section class="panel maintenance-panel">
-        <div class="panel-head">
-          <div>
-            <h2>Maintenance</h2>
+      <section class="panel tabbed-panel" data-tabs>
+        <div class="panel-tabs" role="tablist" aria-label="Operations">
+          <button type="button" class="panel-tab is-active" role="tab" aria-selected="true" data-tab="maintenance">Maintenance</button>
+          <button type="button" class="panel-tab" role="tab" aria-selected="false" data-tab="diagnostics">Diagnostics</button>
+        </div>
+
+        <div class="panel-tabpanel is-active" role="tabpanel" data-tabpanel="maintenance">
+          <div class="panel-head panel-head-tab">
             <p>Account and restore actions that should stay close to the admin panel.</p>
           </div>
+
+          <div class="maintenance-grid">
+            <form class="maintenance-card" method="post" action="/account/password">
+              <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+              <div>
+                <h3>Account password</h3>
+                <p>Change the admin password and rotate active sessions.</p>
+              </div>
+              <label>
+                Current password
+                <input name="current_password" type="password" autocomplete="current-password" required>
+              </label>
+              <label>
+                New password
+                <input name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+              </label>
+              <label>
+                Confirm new password
+                <input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+              </label>
+              <button type="submit" data-loading-label="Updating...">Update password</button>
+            </form>
+
+            <form class="maintenance-card danger-zone" method="post" action="/restore" enctype="multipart/form-data" data-confirm="Restore this backup and restart NerdGate Hub? Current routes, users, sessions, and certificates may be replaced.">
+              <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
+              <div>
+                <h3>Restore backup</h3>
+                <p>Upload a NerdGate backup zip. The app stages it, restarts, then applies it before SQLite opens.</p>
+              </div>
+              <label class="file-drop" data-empty-text="No file selected">
+                <input name="backup" type="file" accept=".zip,application/zip" required>
+                <span class="file-drop-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                </span>
+                <span class="file-drop-body">
+                  <strong>Drop a backup .zip</strong>
+                  <span class="file-drop-hint">or click to choose — NerdGate Hub backup format</span>
+                </span>
+                <span class="file-drop-filename">No file selected</span>
+              </label>
+              <label class="confirm-line">
+                <input name="confirm_restore" type="checkbox" required>
+                <span>I understand NerdGate Hub will restart and current data may be replaced.</span>
+              </label>
+              <button class="ghost" type="submit" data-loading-label="Staging restore...">Stage restore</button>
+            </form>
+          </div>
         </div>
 
-        <div class="maintenance-grid">
-          <form class="maintenance-card" method="post" action="/account/password">
-            <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
-            <div>
-              <h3>Account password</h3>
-              <p>Change the admin password and rotate active sessions.</p>
-            </div>
-            <label>
-              Current password
-              <input name="current_password" type="password" autocomplete="current-password" required>
-            </label>
-            <label>
-              New password
-              <input name="new_password" type="password" autocomplete="new-password" minlength="8" required>
-            </label>
-            <label>
-              Confirm new password
-              <input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
-            </label>
-            <button type="submit" data-loading-label="Updating...">Update password</button>
-          </form>
-
-          <form class="maintenance-card danger-zone" method="post" action="/restore" enctype="multipart/form-data" data-confirm="Restore this backup and restart NerdGate Hub? Current routes, users, sessions, and certificates may be replaced.">
-            <input name="_csrf" type="hidden" value="{{ .CSRFToken }}">
-            <div>
-              <h3>Restore backup</h3>
-              <p>Upload a NerdGate backup zip. The app stages it, restarts, then applies it before SQLite opens.</p>
-            </div>
-            <label>
-              Backup zip
-              <input name="backup" type="file" accept=".zip,application/zip" required>
-            </label>
-            <label class="confirm-line">
-              <input name="confirm_restore" type="checkbox" required>
-              <span>I understand NerdGate Hub will restart and current data may be replaced.</span>
-            </label>
-            <button class="ghost" type="submit" data-loading-label="Staging restore...">Stage restore</button>
-          </form>
-        </div>
-      </section>
-
-      <section class="panel diagnostics-panel">
-        <div class="panel-head">
-          <div>
-            <h2>Diagnostics</h2>
+        <div class="panel-tabpanel" role="tabpanel" data-tabpanel="diagnostics" hidden>
+          <div class="panel-head panel-head-tab">
             <p>Live checks for route targets, Docker, Traefik config, and certificate clues.</p>
           </div>
-        </div>
-        <div class="diagnostics-grid">
-          <div class="diagnostic-item">
-            <span>Traefik config</span>
-            <strong>{{ .Diagnostics.ConfigStatus }}</strong>
-            <code>{{ .Diagnostics.ConfigPath }}</code>
-          </div>
-          <div class="diagnostic-item">
-            <span>Docker API</span>
-            <strong>{{ .Diagnostics.DockerStatus }}</strong>
-          </div>
-          <div class="diagnostic-item">
-            <span>Targets</span>
-            <strong>{{ .Diagnostics.HealthStatus }}</strong>
-          </div>
-          <div class="diagnostic-item backup-item">
-            <span>Backup</span>
-            <strong>SQLite + routes + certificates</strong>
-            <a class="secondary-button button-link" href="{{ .Diagnostics.BackupPath }}">Download backup</a>
-            <small>{{ .Diagnostics.RestoreHint }}</small>
-          </div>
-        </div>
-        <div class="hint-list">
-          {{ range .Diagnostics.Hints }}
-          <p>{{ . }}</p>
-          {{ end }}
-        </div>
-        {{ if .Diagnostics.TraefikLogs }}
-        <details class="log-box">
-          <summary>Traefik logs</summary>
-          <pre>{{ .Diagnostics.TraefikLogs }}</pre>
-        </details>
-        {{ end }}
-        {{ if .Diagnostics.AuditEvents }}
-        <details class="log-box">
-          <summary>Audit log</summary>
-          <div class="audit-list">
-            {{ range .Diagnostics.AuditEvents }}
-            <div class="audit-item">
-              <strong>{{ .Action }}</strong>
-              <span>{{ .Actor }}</span>
-              <code>{{ .Detail }}</code>
+          <div class="diagnostics-grid">
+            <div class="diagnostic-item">
+              <span>Traefik config</span>
+              <strong>{{ .Diagnostics.ConfigStatus }}</strong>
+              <code>{{ .Diagnostics.ConfigPath }}</code>
             </div>
+            <div class="diagnostic-item">
+              <span>Docker API</span>
+              <strong>{{ .Diagnostics.DockerStatus }}</strong>
+            </div>
+            <div class="diagnostic-item">
+              <span>Targets</span>
+              <strong>{{ .Diagnostics.HealthStatus }}</strong>
+            </div>
+            <div class="diagnostic-item backup-item">
+              <span>Backup</span>
+              <strong>SQLite + routes + certificates</strong>
+              <a class="secondary-button button-link" href="{{ .Diagnostics.BackupPath }}">Download backup</a>
+              <small>{{ .Diagnostics.RestoreHint }}</small>
+            </div>
+          </div>
+          <div class="hint-list">
+            {{ range .Diagnostics.Hints }}
+            <p>{{ . }}</p>
             {{ end }}
           </div>
-        </details>
-        {{ end }}
+          {{ if .Diagnostics.TraefikLogs }}
+          <details class="log-box">
+            <summary>Traefik logs</summary>
+            <pre>{{ .Diagnostics.TraefikLogs }}</pre>
+          </details>
+          {{ end }}
+          {{ if .Diagnostics.AuditEvents }}
+          <details class="log-box">
+            <summary>Audit log</summary>
+            <div class="audit-list">
+              {{ range .Diagnostics.AuditEvents }}
+              <div class="audit-item">
+                <strong>{{ .Action }}</strong>
+                <span>{{ .Actor }}</span>
+                <code>{{ .Detail }}</code>
+              </div>
+              {{ end }}
+            </div>
+          </details>
+          {{ end }}
+        </div>
       </section>
 
       <section class="routes">

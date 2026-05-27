@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "site/**"
+      - "site-next/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,6 +30,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        working-directory: site-next
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: site-next
+        run: pnpm build
+
+      - name: SPA fallback (copy index.html -> 404.html)
+        run: cp site-next/dist/index.html site-next/dist/404.html
+
       - name: Configure Pages
         if: env.PAGES_TOKEN == ''
         uses: actions/configure-pages@v5
@@ -44,7 +65,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: site
+          path: site-next/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
